@@ -1,0 +1,185 @@
+User Stories — Projet Anonyme
+
+EPIC 1 — Authentification & Comptes
+US-001 — Inscription membre
+En tant que visiteur, je veux créer un compte avec email + mot de passe + pseudo, afin d'accéder au fil communautaire.
+
+Critères : email unique, pseudo unique, mot de passe hashé (bcryptjs), email de vérification envoyé (Nodemailer), compte inactif jusqu'à vérification.
+
+US-002 — Vérification email
+En tant que membre inscrit, je veux cliquer sur le lien reçu par email, afin d'activer mon compte.
+
+Critères : token UUID stocké dans EmailToken, expiration gérée (expiresAt), token marqué used: true après usage, redirection vers verify-email.html.
+
+US-003 — Connexion
+En tant que membre vérifié, je veux me connecter avec email + mot de passe, afin de recevoir un JWT valide.
+
+Critères : vérification emailVerified: true, vérification status: ACTIVE, JWT signé (JWT_SECRET, durée JWT_EXPIRES_IN), retour du rôle dans le payload.
+
+US-004 — Protection des routes
+En tant que système, je veux que toutes les routes /api/* (sauf inscription/connexion) exigent un JWT valide, afin de bloquer les accès non authentifiés.
+
+Critères : middleware middleware/auth.js, token vérifié à chaque requête, 401 si absent ou invalide.
+
+
+EPIC 2 — Gestion des rôles
+US-005 — Rôle MEMBER par défaut
+En tant que système, je veux que tout nouveau compte créé ait le rôle MEMBER, afin de garantir un accès minimal par défaut.
+US-006 — Promotion vers PRO (Badge vérifié)
+En tant qu'admin, je veux promouvoir un compte MEMBER vers PRO, afin de lui donner le statut de badge vérifié.
+
+Critères : route PATCH /api/admin/users/:id/role, réservée au rôle ADMIN via middleware/adminOnly.js, action loguée dans AdminLog.
+
+US-007 — Création d'un compte admin
+En tant qu'admin, je veux créer un compte avec le rôle ADMIN directement, afin de gérer la plateforme.
+
+Critères : seul un ADMIN peut créer ou promouvoir un autre ADMIN.
+
+
+EPIC 3 — Visibilité des identités
+US-008 — Pseudonymes visibles par tous
+En tant que membre, badge vérifié ou admin, je veux voir le pseudonyme de tous les utilisateurs sur le fil public, afin d'identifier les auteurs de posts.
+
+Critères : le champ pseudo est retourné sur toutes les réponses publiques.
+
+US-009 — Vrai nom visible uniquement sur le profil badge vérifié
+En tant que visiteur ou membre, je veux voir le nom complet, la spécialité et la photo d'un badge vérifié sur son profil public, afin d'évaluer sa crédibilité.
+
+Critères : fullName + champs pro retournés uniquement pour role: PRO sur GET /api/users/:id/profile.
+
+US-010 — Vrai nom du membre caché par défaut
+En tant que badge vérifié, je ne veux pas voir le vrai nom d'un membre sur le fil public, afin de respecter son anonymat.
+
+Critères : les réponses du fil retournent uniquement pseudo pour les MEMBER.
+
+US-011 — Révélation du vrai nom lors d'un premier message
+En tant que badge vérifié, je veux voir le vrai nom d'un membre uniquement à partir du moment où il m'a envoyé un premier message, afin de savoir qui me contacte.
+
+Critères : à la création d'un Message (senderId = MEMBER, receiverId = PRO), le fullName du membre devient accessible côté PRO dans la conversation. Avant ce message, seul le pseudo est visible.
+
+US-012 — Pas d'annuaire des membres pour le badge vérifié
+En tant que badge vérifié, je ne veux pas avoir accès à la liste complète des vrais noms des membres, afin de ne pas dépasser mes droits d'accès.
+
+Critères : aucune route ne retourne fullName des MEMBER en masse pour un PRO. Accès limité aux membres qui ont initié une conversation.
+
+US-013 — Vue globale admin
+En tant qu'admin, je veux accéder aux vrais noms de tous les membres, afin de modérer la plateforme efficacement.
+
+Critères : GET /api/admin/users retourne fullName + email pour tous les comptes, route protégée par adminOnly.js.
+
+
+EPIC 4 — Fil communautaire (Posts)
+US-014 — Publier un post
+En tant que membre, badge vérifié ou admin, je veux publier un post sur le fil, afin de partager du contenu avec la communauté.
+
+Critères : POST /api/posts, champ isAnonymous optionnel, status: VISIBLE par défaut.
+
+US-015 — Publication anonyme
+En tant que membre, je veux publier un post en mode anonyme, afin que mon pseudo n'apparaisse pas publiquement.
+
+Critères : si isAnonymous: true, le pseudo n'est pas retourné dans la réponse publique. Le userId reste stocké en base.
+
+US-016 — Supprimer son propre post
+En tant que membre, badge vérifié ou admin, je veux supprimer mes propres posts, afin de contrôler mon contenu.
+
+Critères : DELETE /api/posts/:id, vérifie que userId correspond au token JWT. Passe status à REMOVED.
+
+US-017 — Supprimer le post d'un autre (modération)
+En tant que badge vérifié ou admin, je veux supprimer le post d'un autre utilisateur, afin de modérer le contenu problématique.
+
+Critères : autorisé pour role: PRO et role: ADMIN. Action loguée dans AdminLog pour l'admin.
+
+
+EPIC 5 — Commentaires
+US-018 — Commenter un post
+En tant que membre, badge vérifié ou admin, je veux commenter un post, afin d'interagir avec la communauté.
+
+Critères : POST /api/comments, lié à un postId valide, isAnonymous supporté.
+
+US-019 — Supprimer un commentaire
+Mêmes règles que US-016 et US-017 appliquées aux commentaires via DELETE /api/comments/:id.
+
+EPIC 6 — Réactions
+US-020 — Réagir à un post
+En tant que membre, je veux liker un post, afin d'exprimer mon soutien.
+
+Critères : POST /api/posts/:id/react, contrainte @@unique([postId, userId]) — une seule réaction par membre par post.
+
+US-021 — Retirer sa réaction
+En tant que membre, je veux retirer mon like, afin de changer d'avis.
+
+Critères : DELETE /api/posts/:id/react.
+
+
+EPIC 7 — Messagerie privée (temps réel)
+US-022 — Envoyer un message privé
+En tant que membre, je veux envoyer un message privé à un badge vérifié, afin d'obtenir un accompagnement personnalisé.
+
+Critères : POST /api/messages, senderId = membre authentifié, receiverId = PRO. Émission Socket.io vers la room receiverId.
+
+US-023 — Recevoir un message en temps réel
+En tant que badge vérifié connecté, je veux recevoir les messages instantanément sans recharger la page, afin d'avoir une expérience fluide.
+
+Critères : Socket.io, le client rejoint sa room via socket.emit('join', userId), événement message émis au destinataire.
+
+US-024 — Historique des messages
+En tant que badge vérifié ou membre, je veux consulter l'historique d'une conversation, afin de retrouver les échanges passés.
+
+Critères : GET /api/messages/:userId, retourne les messages ordonnés par createdAt, fullName du membre inclus côté PRO si premier message existant.
+
+US-025 — Marquer un message comme lu
+En tant que destinataire, je veux que les messages soient marqués lus à l'ouverture, afin que l'expéditeur sache que son message a été vu.
+
+Critères : PATCH /api/messages/:id/read, met à jour readAt.
+
+
+EPIC 8 — Chatbot Gemini
+US-026 — Interagir avec le chatbot
+En tant que membre, je veux poser une question au chatbot IA, afin d'obtenir une aide immédiate anonyme.
+
+Critères : POST /api/chat, appel au service services/gemini.js via @google/generative-ai, rate limiting appliqué, réponse retournée au client.
+
+
+EPIC 9 — Signalements
+US-027 — Signaler un post ou commentaire
+En tant que membre, je veux signaler un contenu inapproprié, afin d'alerter la modération.
+
+Critères : POST /api/reports, targetType: POST | COMMENT, status: PENDING par défaut.
+
+US-028 — Traiter un signalement (admin)
+En tant qu'admin, je veux consulter et résoudre les signalements, afin de maintenir la qualité de la plateforme.
+
+Critères : GET /api/admin/reports (filtre par status), PATCH /api/admin/reports/:id → RESOLVED ou DISMISSED, action loguée dans AdminLog.
+
+
+EPIC 10 — Dashboard Admin
+US-029 — Voir tous les utilisateurs
+En tant qu'admin, je veux lister tous les comptes avec leurs rôles et statuts, afin d'avoir une vue globale.
+
+Critères : GET /api/admin/users, retourne fullName, email, pseudo, role, status.
+
+US-030 — Suspendre / bannir un compte
+En tant qu'admin, je veux changer le statut d'un compte vers SUSPENDED ou BANNED, afin de gérer les abus.
+
+Critères : PATCH /api/admin/users/:id/status, bloqué à la connexion si status !== ACTIVE, action loguée.
+
+US-031 — Consulter les logs d'actions admin
+En tant qu'admin, je veux voir l'historique de toutes les actions d'administration, afin d'assurer la traçabilité.
+
+Critères : GET /api/admin/logs, retourne les AdminLog ordonnés par createdAt DESC.
+
+
+EPIC 11 — Sécurité & Infrastructure
+US-032 — Rate limiting global
+En tant que système, je veux limiter à 100 requêtes/minute par IP sur /api/, afin de prévenir les abus.
+US-033 — Headers sécurisés
+En tant que système, je veux que Helmet applique les headers HTTP de sécurité, afin de réduire la surface d'attaque.
+US-034 — Déploiement PM2
+En tant que système, je veux que le serveur redémarre automatiquement en cas de crash, afin d'assurer la disponibilité.
+
+Critères : ecosystem.config.js, autorestart: true, pm2 save + pm2 startup.
+
+US-035 — Reverse proxy Nginx
+En tant que système, je veux que Nginx proxifie le trafic vers le port 3000 et supporte les WebSockets, afin d'exposer l'application sur le port 80/443.
+
+Critères : headers Upgrade et Connection configurés pour Socket.io.

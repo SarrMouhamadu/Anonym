@@ -30,17 +30,25 @@ app.use('/api/', limiter);
 // Routes
 // Note: les routes seront bouchonnées pour l'instant car elles nécessitent d'être créées plus tard
 app.use('/api/auth',     require('./routes/auth'));
-// app.use('/api/posts',    require('./routes/posts'));
-// app.use('/api/comments', require('./routes/comments'));
-// app.use('/api/messages', require('./routes/messages'));
-// app.use('/api/chat',     require('./routes/chat'));
-// app.use('/api/admin',    require('./routes/admin'));
+app.use('/api/posts',    require('./routes/posts'));
+app.use('/api/comments', require('./routes/comments'));
+app.use('/api/messages', require('./routes/messages'));
+app.use('/api/chat',     require('./routes/chat'));
+app.use('/api/admin',    require('./routes/admin'));
+app.use('/api/reports',  require('./routes/reports'));
 
 // Socket.io — messagerie temps réel
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
-  // vérifier JWT ici
-  next();
+  if (!token) return next(new Error('Auth token missing'));
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_temporaire');
+    socket.user = decoded;
+    next();
+  } catch (err) {
+    next(new Error('Auth failed'));
+  }
 });
 
 io.on('connection', (socket) => {
