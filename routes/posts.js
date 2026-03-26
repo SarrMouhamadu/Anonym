@@ -5,12 +5,18 @@ const auth = require('../middleware/auth');
 
 const prisma = new PrismaClient();
 
-// GET /api/posts — US-008: Pseudo visible par tous
+// GET /api/posts — US-008 & Performance: Pagination support
 router.get('/', async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const posts = await prisma.post.findMany({
       where: { status: 'VISIBLE' },
       orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
       include: {
         user: {
           select: { pseudo: true, role: true }

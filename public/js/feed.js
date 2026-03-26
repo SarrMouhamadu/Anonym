@@ -1,22 +1,34 @@
-// TikTok Feed Interface Logic
-const loadFeed = async () => {
+// TikTok Feed Interface Logic with Infinite Scroll
+let currentPage = 1;
+let loading = false;
+let noMorePosts = false;
+
+const loadFeed = async (reset = false) => {
+    if (loading || (noMorePosts && !reset)) return;
+    loading = true;
+    
+    if (reset) {
+        currentPage = 1;
+        noMorePosts = false;
+        document.getElementById('feedList').innerHTML = '<div id="loader" style="height: 100vh; display:flex; align-items:center; justify-content:center;"><p>Chargement...</p></div>';
+    }
+
     try {
-        const response = await fetch('/api/posts', {
+        const response = await fetch(`/api/posts?page=${currentPage}&limit=5`, {
             headers: getAuthHeaders()
         });
         const posts = await response.json();
         
-        if (!response.ok) throw new Error(posts.error || 'Erreur chargement fil');
+        if (!response.ok) throw new Error(posts.error);
 
         const feedContainer = document.getElementById('feedList');
-        feedContainer.innerHTML = '';
+        if (reset) feedContainer.innerHTML = '';
+        else document.getElementById('loader')?.remove();
 
         if (posts.length === 0) {
-            feedContainer.innerHTML = `
-                <div class="post-card-snap" style="justify-content: center; align-items: center; color: var(--text-muted);">
-                    <p>Aucun post pour le moment. Soyez le premier !</p>
-                </div>
-            `;
+            if (reset) feedContainer.innerHTML = '<div class="post-card-snap" style="justify-content:center; align-items:center;">Aucun post.</div>';
+            noMorePosts = true;
+            loading = false;
             return;
         }
 
@@ -27,54 +39,44 @@ const loadFeed = async () => {
                 <div style="padding: 40px; text-align: center; font-size: 1.5rem; line-height: 1.4; max-width: 600px; margin: 0 auto;">
                     ${post.content}
                 </div>
-                
                 <div class="post-overlay">
-                    <div style="font-weight: 700; margin-bottom: 5px; font-size: 1.1rem;">
-                        @${post.user.pseudo} ${post.user.role === 'PRO' ? '✅' : ''}
-                    </div>
+                    <div style="font-weight: 700;">@${post.user.pseudo} ${post.user.role === 'PRO' ? '✅' : ''}</div>
                 </div>
-
                 <div class="post-sidebar">
-                    <div class="sidebar-icon" onclick="reactToPost('${post.id}')">
-                        ❤️
-                        <span class="sidebar-label" style="position: absolute; bottom: -20px;">${post._count.reactions}</span>
-                    </div>
-                    <div class="sidebar-icon" onclick="openComments('${post.id}')">
-                        💬
-                        <span class="sidebar-label" style="position: absolute; bottom: -20px;">${post._count.comments}</span>
-                    </div>
-                    <div class="sidebar-icon" onclick="toggleChatbot()">
-                        🤖
-                    </div>
-                    <div class="sidebar-icon" onclick="openMessaging('${post.userId}', '${post.user.pseudo}')">
-                        ✉️
-                    </div>
-                    <div class="sidebar-icon" onclick="reportPost('${post.id}')">
-                        🚩
-                    </div>
-                    ${canDelete(post) ? `
-                    <div class="sidebar-icon" onclick="deletePost('${post.id}')" style="background: rgba(239, 68, 68, 0.2);">
-                        🗑️
-                    </div>` : ''}
+                    <div class="sidebar-icon" onclick="reactToPost('${post.id}')">❤️ <span class="sidebar-label">${post._count.reactions}</span></div>
+                    <div class="sidebar-icon" onclick="openComments('${post.id}')">💬 <span class="sidebar-label">${post._count.comments}</span></div>
+                    <div class="sidebar-icon" onclick="toggleChatbot()">🤖</div>
+                    <div class="sidebar-icon" onclick="openMessaging('${post.userId}', '${post.user.pseudo}')">✉️</div>
+                    <div class="sidebar-icon" onclick="reportPost('${post.id}')">🚩</div>
+                    ${canDelete(post) ? `<div class="sidebar-icon" onclick="deletePost('${post.id}')" style="background:rgba(239,68,68,0.2);">🗑️</div>` : ''}
                 </div>
             `;
             feedContainer.appendChild(card);
         });
 
+        currentPage++;
+        loading = false;
     } catch (error) {
-        console.error('Feed error:', error);
+        console.error(error);
+        loading = false;
     }
 };
+
+// Scroll listener for Infinite Scroll
+document.getElementById('feedList')?.addEventListener('scroll', (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    // Load next page when 200px from bottom or near last post
+    if (scrollTop + clientHeight >= scrollHeight - 200) {
+        loadFeed();
+    }
+});
 
 const openComments = async (postId) => {
     const modal = document.getElementById('commentsModal');
     modal.style.display = 'flex';
     window.currentPostIdForComment = postId;
-    
-    // Load existing
     const list = document.getElementById('commentsList');
-    list.innerHTML = '<p style="color: grey;">Chargement...</p>';
-    
+    list.innerHTML = 'Chargement...';
     try {
         const res = await fetch(`/api/comments/post/${postId}`, { headers: getAuthHeaders() });
         const comments = await res.json();
@@ -83,7 +85,7 @@ const openComments = async (postId) => {
             const div = document.createElement('div');
             div.style.padding = '10px 0';
             div.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-            div.innerHTML = `<span style="color: var(--primary); font-weight: 600;">${c.user.pseudo}</span>: <span>${c.content}</span>`;
+            div.innerHTML = `<span style="color:var(--primary); font-weight:600;">${c.user.pseudo}</span>: ${c.content}`;
             list.appendChild(div);
         });
     } catch (e) { console.error(e); }
@@ -92,41 +94,35 @@ const openComments = async (postId) => {
 document.getElementById('submitCommentBtn')?.addEventListener('click', async () => {
     const input = document.getElementById('commentInput');
     const content = input.value;
-    const postId = window.currentPostIdForComment;
-    if (!content || !postId) return;
-
+    if (!content || !window.currentPostIdForComment) return;
     try {
         await fetch('/api/comments', {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ postId, content })
+            body: JSON.stringify({ postId: window.currentPostIdForComment, content })
         });
         input.value = '';
-        openComments(postId);
-        loadFeed(); // Refresh count
+        openComments(window.currentPostIdForComment);
+        // We don't reload the full feed to avoid jump, but stats won't update till reload or socket
     } catch (e) { alert(e.message); }
 });
 
 const reportPost = async (postId) => {
-    const reason = prompt('Pourquoi signalez-vous ce post ? (ex: contenu inapproprié)');
+    const reason = prompt('Pourquoi signalez-vous ce post ?');
     if (!reason) return;
     try {
-        const res = await fetch('/api/reports', {
+        await fetch('/api/reports', {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify({ targetType: 'POST', postId, reason })
         });
-        if (!res.ok) throw new Error('Erreur signalement');
-        alert('Merci, votre signalement a été envoyé à l\'équipe de modération.');
-    } catch (e) {
-        alert(e.message);
-    }
+        alert('Signalement envoyé.');
+    } catch (e) { alert(e.message); }
 };
 
 const canDelete = (post) => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (!user) return false;
-    return user.id === post.userId || user.role === 'ADMIN';
+    return user && (user.id === post.userId || user.role === 'ADMIN');
 };
 
 const publishPost = async (content, isAnonymous) => {
@@ -136,48 +132,30 @@ const publishPost = async (content, isAnonymous) => {
             headers: getAuthHeaders(),
             body: JSON.stringify({ content, isAnonymous })
         });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
-        
+        if (!response.ok) throw new Error('Erreur');
         document.getElementById('postContent').value = '';
         document.getElementById('postModal').style.display = 'none';
-        loadFeed();
-    } catch (error) {
-        alert(error.message);
-    }
+        loadFeed(true);
+    } catch (error) { alert(error.message); }
 };
 
 const deletePost = async (postId) => {
-    if (!confirm('Supprimer ce post définitivement ?')) return;
-    try {
-        const response = await fetch(`/api/posts/${postId}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders()
-        });
-        if (!response.ok) throw new Error('Erreur suppression');
-        loadFeed();
-    } catch (error) {
-        alert(error.message);
+    if (confirm('Supprimer ?')) {
+        await fetch(`/api/posts/${postId}`, { method: 'DELETE', headers: getAuthHeaders() });
+        loadFeed(true);
     }
 };
 
 const reactToPost = async (postId) => {
-    try {
-        const res = await fetch(`/api/posts/${postId}/react`, { 
-            method: 'POST', 
-            headers: getAuthHeaders() 
-        });
-        if (res.status === 409) {
-            await fetch(`/api/posts/${postId}/react`, { method: 'DELETE', headers: getAuthHeaders() });
-        }
-        loadFeed();
-    } catch (e) { console.error(e); }
+    const res = await fetch(`/api/posts/${postId}/react`, { method: 'POST', headers: getAuthHeaders() });
+    if (res.status === 409) await fetch(`/api/posts/${postId}/react`, { method: 'DELETE', headers: getAuthHeaders() });
+    // Stats won't update in TikTok style without state management or reload, 
+    // for now we don't reload to maintain scroll position unless explicitly needed
 };
 
 const toggleChatbot = () => window.location.href = '/chatbot.html';
 const openMessaging = (id, name) => window.location.href = `/messages.html?to=${id}&name=${encodeURIComponent(name)}`;
 
-// UI Listeners
 document.getElementById('showPublishBtn')?.addEventListener('click', () => {
     document.getElementById('postModal').style.display = 'block';
 });
