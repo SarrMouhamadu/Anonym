@@ -42,6 +42,8 @@ model Post {
   id          String    @id @default(uuid())
   userId      String
   content     String
+  mediaUrl    String?
+  mediaType   String     @default("TEXT") // TEXT, IMAGE, VIDEO
   isAnonymous Boolean   @default(false)
   status      PostStatus @default(VISIBLE)
   createdAt   DateTime  @default(now())

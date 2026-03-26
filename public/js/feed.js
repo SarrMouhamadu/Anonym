@@ -1,4 +1,4 @@
-// TikTok Feed Interface Logic with Infinite Scroll
+// TikTok Feed Interface Logic with Infinite Scroll & Media Support
 let currentPage = 1;
 let loading = false;
 let noMorePosts = false;
@@ -18,7 +18,6 @@ const loadFeed = async (reset = false) => {
             headers: getAuthHeaders()
         });
         const posts = await response.json();
-        
         if (!response.ok) throw new Error(posts.error);
 
         const feedContainer = document.getElementById('feedList');
@@ -35,14 +34,24 @@ const loadFeed = async (reset = false) => {
         posts.forEach(post => {
             const card = document.createElement('div');
             card.className = 'post-card-snap';
+            
+            let mediaHtml = '';
+            if (post.mediaType === 'IMAGE' && post.mediaUrl) {
+                mediaHtml = `<img src="${post.mediaUrl}" style="position:absolute; width:100%; height:100%; object-fit:cover; opacity:0.6; z-index:0;">`;
+            } else if (post.mediaType === 'VIDEO' && post.mediaUrl) {
+                mediaHtml = `<video src="${post.mediaUrl}" autoplay muted loop style="position:absolute; width:100%; height:100%; object-fit:cover; opacity:0.6; z-index:0;"></video>`;
+            }
+
             card.innerHTML = `
-                <div style="padding: 40px; text-align: center; font-size: 1.5rem; line-height: 1.4; max-width: 600px; margin: 0 auto;">
+                ${mediaHtml}
+                <div style="position:relative; z-index:1; padding:40px; text-align:center; font-size:1.5rem; line-height:1.4; max-width:600px; margin:0 auto; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
                     ${post.content}
                 </div>
-                <div class="post-overlay">
-                    <div style="font-weight: 700;">@${post.user.pseudo} ${post.user.role === 'PRO' ? '✅' : ''}</div>
+                <div class="post-overlay" style="z-index:2;">
+                    <div style="font-weight:700;">@${post.user.pseudo} ${post.user.role === 'PRO' ? '✅' : ''}</div>
+                    <div style="font-size:0.8rem; opacity:0.8;">${new Date(post.createdAt).toLocaleDateString()}</div>
                 </div>
-                <div class="post-sidebar">
+                <div class="post-sidebar" style="z-index:2;">
                     <div class="sidebar-icon" onclick="reactToPost('${post.id}')">❤️ <span class="sidebar-label">${post._count.reactions}</span></div>
                     <div class="sidebar-icon" onclick="openComments('${post.id}')">💬 <span class="sidebar-label">${post._count.comments}</span></div>
                     <div class="sidebar-icon" onclick="toggleChatbot()">🤖</div>
@@ -56,6 +65,7 @@ const loadFeed = async (reset = false) => {
 
         currentPage++;
         loading = false;
+        if (reset) feedContainer.scrollTop = 0;
     } catch (error) {
         console.error(error);
         loading = false;
@@ -65,8 +75,7 @@ const loadFeed = async (reset = false) => {
 // Scroll listener for Infinite Scroll
 document.getElementById('feedList')?.addEventListener('scroll', (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
-    // Load next page when 200px from bottom or near last post
-    if (scrollTop + clientHeight >= scrollHeight - 200) {
+    if (scrollTop + clientHeight >= scrollHeight - 300) {
         loadFeed();
     }
 });
@@ -103,7 +112,6 @@ document.getElementById('submitCommentBtn')?.addEventListener('click', async () 
         });
         input.value = '';
         openComments(window.currentPostIdForComment);
-        // We don't reload the full feed to avoid jump, but stats won't update till reload or socket
     } catch (e) { alert(e.message); }
 });
 
@@ -126,14 +134,20 @@ const canDelete = (post) => {
 };
 
 const publishPost = async (content, isAnonymous) => {
+    const mediaUrl = document.getElementById('postMediaUrl').value;
+    const mediaType = document.getElementById('postMediaType').value;
+
     try {
         const response = await fetch('/api/posts', {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ content, isAnonymous })
+            body: JSON.stringify({ content, isAnonymous, mediaUrl, mediaType })
         });
-        if (!response.ok) throw new Error('Erreur');
+        if (!response.ok) throw new Error('Erreur publication');
+        
+        // Reset and reload
         document.getElementById('postContent').value = '';
+        document.getElementById('postMediaUrl').value = '';
         document.getElementById('postModal').style.display = 'none';
         loadFeed(true);
     } catch (error) { alert(error.message); }
@@ -149,8 +163,6 @@ const deletePost = async (postId) => {
 const reactToPost = async (postId) => {
     const res = await fetch(`/api/posts/${postId}/react`, { method: 'POST', headers: getAuthHeaders() });
     if (res.status === 409) await fetch(`/api/posts/${postId}/react`, { method: 'DELETE', headers: getAuthHeaders() });
-    // Stats won't update in TikTok style without state management or reload, 
-    // for now we don't reload to maintain scroll position unless explicitly needed
 };
 
 const toggleChatbot = () => window.location.href = '/chatbot.html';
@@ -158,4 +170,11 @@ const openMessaging = (id, name) => window.location.href = `/messages.html?to=${
 
 document.getElementById('showPublishBtn')?.addEventListener('click', () => {
     document.getElementById('postModal').style.display = 'block';
+});
+
+// Listener for Publish Button (needs global handler now)
+document.getElementById('publishBtn')?.addEventListener('click', () => {
+    const content = document.getElementById('postContent').value;
+    const isAnonymous = document.getElementById('isAnonymous').checked;
+    publishPost(content, isAnonymous);
 });

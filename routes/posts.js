@@ -43,17 +43,24 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/posts — US-014: Publier un post
+// POST /api/posts — US-014: Création de post (avec support média)
 router.post('/', auth, async (req, res) => {
   try {
-    const { content, isAnonymous } = req.body;
+    const { content, isAnonymous, mediaUrl, mediaType } = req.body;
     if (!content) return res.status(400).json({ error: 'Le contenu est requis.' });
+
+    const validMediaTypes = ['TEXT', 'IMAGE', 'VIDEO'];
+    if (mediaType && !validMediaTypes.includes(mediaType)) {
+      return res.status(400).json({ error: 'Type de média invalide. Doit être TEXT, IMAGE ou VIDEO.' });
+    }
 
     const post = await prisma.post.create({
       data: {
         userId: req.user.id,
         content,
         isAnonymous: !!isAnonymous,
+        mediaUrl: mediaUrl || null,
+        mediaType: mediaType || 'TEXT',
         status: 'VISIBLE'
       },
       include: {
