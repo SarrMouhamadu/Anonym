@@ -49,6 +49,9 @@ const loadFeed = async () => {
                     <div class="sidebar-icon" onclick="openMessaging('${post.userId}', '${post.user.pseudo}')">
                         ✉️
                     </div>
+                    <div class="sidebar-icon" onclick="reportPost('${post.id}')">
+                        🚩
+                    </div>
                     ${canDelete(post) ? `
                     <div class="sidebar-icon" onclick="deletePost('${post.id}')" style="background: rgba(239, 68, 68, 0.2);">
                         🗑️
@@ -60,6 +63,22 @@ const loadFeed = async () => {
 
     } catch (error) {
         console.error('Feed error:', error);
+    }
+};
+
+const reportPost = async (postId) => {
+    const reason = prompt('Pourquoi signalez-vous ce post ? (ex: contenu inapproprié)');
+    if (!reason) return;
+    try {
+        const res = await fetch('/api/reports', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ targetType: 'POST', postId, reason })
+        });
+        if (!res.ok) throw new Error('Erreur signalement');
+        alert('Merci, votre signalement a été envoyé à l\'équipe de modération.');
+    } catch (e) {
+        alert(e.message);
     }
 };
 
