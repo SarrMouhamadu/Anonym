@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String?   @unique
+  phone           String?
+  emailVerified   Boolean   @default(false)
+  password        String
+  fullName        String
+  pseudo          String    @unique
+  role            Role      @default(MEMBER)
+  status          Status    @default(ACTIVE)
+  createdAt       DateTime  @default(now())
+  posts           Post[]
+  comments        Comment[]
+  reactions       Reaction[]
+  reportsMade     Report[]  @relation("ReporterRelation")
+  sentMessages    Message[] @relation("SenderRelation")
+  receivedMessages Message[] @relation("ReceiverRelation")
+  adminLogs       AdminLog[]
+  emailTokens     EmailToken[]
+}
+
+model EmailToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Post {
+  id          String    @id @default(uuid())
+  userId      String
+  content     String
+  isAnonymous Boolean   @default(false)
+  status      PostStatus @default(VISIBLE)
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  comments    Comment[]
+  reactions   Reaction[]
+  reports     Report[]
+}
+
+model Comment {
+  id          String    @id @default(uuid())
+  postId      String
+  userId      String
+  content     String
+  isAnonymous Boolean   @default(false)
+  status      PostStatus @default(VISIBLE)
+  createdAt   DateTime  @default(now())
+  post        Post      @relation(fields: [postId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  reports     Report[]
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  @@unique([postId, userId])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  content    String
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+  sender     User     @relation("SenderRelation", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceiverRelation", fields: [receiverId], references: [id])
+}
+
+model Report {
+  id          String       @id @default(uuid())
+  reporterId  String
+  targetType  TargetType
+  postId      String?
+  commentId   String?
+  reason      String?
+  status      ReportStatus @default(PENDING)
+  resolvedBy  String?
+  createdAt   DateTime     @default(now())
+  reporter    User         @relation("ReporterRelation", fields: [reporterId], references: [id])
+  post        Post?        @relation(fields: [postId], references: [id])
+  comment     Comment?     @relation(fields: [commentId], references: [id])
+}
+
+model AdminLog {
+  id         String   @id @default(uuid())
+  adminId    String
+  action     String
+  targetType String?
+  targetId   String?
+  note       String?
+  createdAt  DateTime @default(now())
+  admin      User     @relation(fields: [adminId], references: [id])
+}
+
+enum Role {
+  MEMBER
+  PRO
+  ADMIN
+}
+
+enum Status {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum PostStatus {
+  VISIBLE
+  REMOVED
+}
+
+enum TargetType {
+  POST
+  COMMENT
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
