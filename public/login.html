@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Anonyme</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="auth-container animate-in">
+        <div class="glass-card auth-container">
+            <div class="auth-header">
+                <h1>ANONYME</h1>
+                <p>Heureux de vous revoir.</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginIdentifier">Email ou Pseudo</label>
+                    <input type="text" id="loginIdentifier" placeholder="Email ou Pseudo" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Se connecter</button>
+            </form>
+
+            <div class="auth-footer">
+                Pas encore de compte ? <a href="/register.html">S'inscrire</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const loginIdentifier = document.getElementById('loginIdentifier').value;
+            const password = document.getElementById('password').value;
+            login(loginIdentifier, password);
+        });
+    </script>
+</body>
+</html>

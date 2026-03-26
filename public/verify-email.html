@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification Email - Anonyme</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="auth-container animate-in">
+        <div class="glass-card auth-container">
+            <div class="auth-header">
+                <h1 id="statusTitle">Vérification...</h1>
+                <p id="statusMsg">Veuillez patienter pendant que nous vérifions votre compte.</p>
+            </div>
+            
+            <div id="loader" style="text-align: center; margin-bottom: 20px;">
+                <p>Chargement...</p>
+            </div>
+
+            <div class="auth-footer">
+                <a href="/login.html" class="btn btn-primary" id="loginBtn" style="display: none;">Aller à la connexion</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        if (!token) {
+            document.getElementById('statusTitle').innerText = "Erreur";
+            document.getElementById('statusMsg').innerText = "Token de vérification manquant dans l'URL.";
+            document.getElementById('loader').style.display = 'none';
+        } else {
+            fetch(`/api/auth/verify-email?token=${token}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('loader').style.display = 'none';
+                    if (data.error) {
+                        document.getElementById('statusTitle').innerText = "Échec";
+                        document.getElementById('statusMsg').innerText = data.error;
+                    } else {
+                        document.getElementById('statusTitle').innerText = "Succès !";
+                        document.getElementById('statusMsg').innerText = data.message;
+                        document.getElementById('loginBtn').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('statusTitle').innerText = "Erreur Serveur";
+                    document.getElementById('statusMsg').innerText = "Impossible de joindre le serveur.";
+                });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonyme - Fil Communautaire</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">ANONYME</div>
+        <div class="nav-links">
+            <a href="/index.html">Fil</a>
+            <a href="/profile.html">Mon Profil</a>
+            <a href="/messages.html">Messages</a>
+            <a href="/chatbot.html">Chat IA</a>
+            <button onclick="logout()" class="action-btn">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container animate-in">
+        <!-- Publish post card -->
+        <div class="glass-card post-card" style="margin-top: 40px; margin-bottom: 40px;">
+            <textarea id="postContent" placeholder="Qu'avez-vous en tête ?" style="width: 100%; height: 100px; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: white;" required></textarea>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <label style="color: var(--text-muted); font-size: 0.9rem;">
+                    <input type="checkbox" id="isAnonymous"> Post anonyme
+                </label>
+                <button id="publishBtn" class="btn btn-primary" style="width: auto; padding: 10px 30px;">Publier</button>
+            </div>
+        </div>
+
+        <!-- Feed list -->
+        <div id="feedList">
+            <!-- Posts will be loaded here -->
+            <div id="loader" style="text-align: center; color: var(--text-muted);">Chargement du fil...</div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/feed.js"></script>
+    <script>
+        checkAuth();
+        document.getElementById('publishBtn').addEventListener('click', () => {
+            const content = document.getElementById('postContent').value;
+            const isAnonymous = document.getElementById('isAnonymous').checked;
+            publishPost(content, isAnonymous);
+        });
+        loadFeed();
+    </script>
+</body>
+</html>
