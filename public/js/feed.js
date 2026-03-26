@@ -32,9 +32,6 @@ const loadFeed = async () => {
                     <div style="font-weight: 700; margin-bottom: 5px; font-size: 1.1rem;">
                         @${post.user.pseudo} ${post.user.role === 'PRO' ? '✅' : ''}
                     </div>
-                    <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 10px;">
-                        ${new Date(post.createdAt).toLocaleDateString()}
-                    </div>
                 </div>
 
                 <div class="post-sidebar">
@@ -42,9 +39,12 @@ const loadFeed = async () => {
                         ❤️
                         <span class="sidebar-label" style="position: absolute; bottom: -20px;">${post._count.reactions}</span>
                     </div>
+                    <div class="sidebar-icon" onclick="openComments('${post.id}')">
+                        💬
+                        <span class="sidebar-label" style="position: absolute; bottom: -20px;">${post._count.comments}</span>
+                    </div>
                     <div class="sidebar-icon" onclick="toggleChatbot()">
                         🤖
-                        <span class="sidebar-label" style="position: absolute; bottom: -20px;">IA</span>
                     </div>
                     <div class="sidebar-icon" onclick="openMessaging('${post.userId}', '${post.user.pseudo}')">
                         ✉️
@@ -65,6 +65,47 @@ const loadFeed = async () => {
         console.error('Feed error:', error);
     }
 };
+
+const openComments = async (postId) => {
+    const modal = document.getElementById('commentsModal');
+    modal.style.display = 'flex';
+    window.currentPostIdForComment = postId;
+    
+    // Load existing
+    const list = document.getElementById('commentsList');
+    list.innerHTML = '<p style="color: grey;">Chargement...</p>';
+    
+    try {
+        const res = await fetch(`/api/comments/post/${postId}`, { headers: getAuthHeaders() });
+        const comments = await res.json();
+        list.innerHTML = '';
+        comments.forEach(c => {
+            const div = document.createElement('div');
+            div.style.padding = '10px 0';
+            div.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+            div.innerHTML = `<span style="color: var(--primary); font-weight: 600;">${c.user.pseudo}</span>: <span>${c.content}</span>`;
+            list.appendChild(div);
+        });
+    } catch (e) { console.error(e); }
+};
+
+document.getElementById('submitCommentBtn')?.addEventListener('click', async () => {
+    const input = document.getElementById('commentInput');
+    const content = input.value;
+    const postId = window.currentPostIdForComment;
+    if (!content || !postId) return;
+
+    try {
+        await fetch('/api/comments', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ postId, content })
+        });
+        input.value = '';
+        openComments(postId);
+        loadFeed(); // Refresh count
+    } catch (e) { alert(e.message); }
+});
 
 const reportPost = async (postId) => {
     const reason = prompt('Pourquoi signalez-vous ce post ? (ex: contenu inapproprié)');

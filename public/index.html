@@ -32,6 +32,21 @@
         </div>
     </div>
 
+    <!-- Overlay Comments Modal -->
+    <div id="commentsModal" class="glass-card" style="display: none; position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; height: 60vh; z-index: 300; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden;">
+        <div style="padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0;">Commentaires</h4>
+            <button onclick="document.getElementById('commentsModal').style.display='none'" class="action-btn" style="font-size: 1.5rem;">×</button>
+        </div>
+        <div id="commentsList" style="flex: 1; overflow-y: auto; padding: 20px;">
+            <!-- Comments here -->
+        </div>
+        <div style="padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px;">
+            <input type="text" id="commentInput" placeholder="Ajouter un commentaire..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--glass); color: white;">
+            <button id="submitCommentBtn" class="btn btn-primary" style="width: auto; padding: 0 20px;">Envoyer</button>
+        </div>
+    </div>
+
     <script src="js/auth.js"></script>
     <script src="js/feed.js"></script>
     <script>
