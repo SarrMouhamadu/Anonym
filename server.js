@@ -59,8 +59,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {});
 });
 
-// Servir le front sur toutes les routes non-API
-app.get('*', (req, res) => {
+// Servir le front sur toutes les routes non-API (SPA fallback)
+app.get('*path', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
