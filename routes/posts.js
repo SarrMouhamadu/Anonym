@@ -131,7 +131,9 @@ router.post('/:id/react', auth, async (req, res) => {
       data: { postId, userId }
     });
 
-    res.status(201).json({ message: 'Réaction ajoutée.' });
+    // Get new count
+    const count = await prisma.reaction.count({ where: { postId } });
+    res.status(201).json({ message: 'Réaction ajoutée.', count });
   } catch (error) {
     if (error.code === 'P2002') return res.status(409).json({ error: 'Vous avez déjà réagi à ce post.' });
     console.error('Erreur add reaction:', error);
@@ -157,7 +159,9 @@ router.delete('/:id/react', auth, async (req, res) => {
       where: { id: reaction.id }
     });
 
-    res.json({ message: 'Réaction retirée.' });
+    // Get new count
+    const count = await prisma.reaction.count({ where: { postId } });
+    res.json({ message: 'Réaction retirée.', count });
   } catch (error) {
     console.error('Erreur delete reaction:', error);
     res.status(500).json({ error: 'Erreur serveur.' });

@@ -24,8 +24,8 @@ const loadFeed = async (reset = false) => {
         const response = await fetch(`/api/posts?page=${currentPage}&limit=5`, {
             headers: getAuthHeaders()
         });
+        if (!response.ok) throw new Error('Failed to load posts');
         const posts = await response.json();
-        if (!response.ok) throw new Error(posts.error);
 
         if (reset) feedContainer.innerHTML = '';
         else document.getElementById('loader')?.remove();
@@ -40,6 +40,7 @@ const loadFeed = async (reset = false) => {
         posts.forEach(post => {
             const card = document.createElement('div');
             card.className = 'post-card-snap';
+            card.id = `post-${post.id}`;
             
             let mediaHtml = '';
             if (post.mediaType === 'IMAGE' && post.mediaUrl) {
@@ -58,12 +59,12 @@ const loadFeed = async (reset = false) => {
                     <div style="font-size:0.8rem; opacity:0.8;">${new Date(post.createdAt).toLocaleDateString()}</div>
                 </div>
                 <div class="post-sidebar" style="z-index:2;">
-                    <button class="sidebar-icon" style="background:none; border:none;" onclick="reactToPost('${post.id}')">❤️ <span class="sidebar-label">${post._count.reactions}</span></button>
-                    <button class="sidebar-icon" style="background:none; border:none;" onclick="openComments('${post.id}')">💬 <span class="sidebar-label">${post._count.comments}</span></button>
-                    <button class="sidebar-icon" style="background:none; border:none;" onclick="toggleChatbot()">🤖</button>
-                    <button class="sidebar-icon" style="background:none; border:none;" onclick="openMessaging('${post.userId}', '${post.user.pseudo}')">✉️</button>
-                    <button class="sidebar-icon" style="background:none; border:none;" onclick="reportPost('${post.id}')">🚩</button>
-                    ${canDelete(post) ? `<button class="sidebar-icon" style="background:none; border:none; color:var(--danger)" onclick="deletePost('${post.id}')">🗑️</button>` : ''}
+                    <button class="sidebar-icon" onclick="reactToPost('${post.id}')">❤️ <span class="sidebar-label" id="react-count-${post.id}">${post._count.reactions}</span></button>
+                    <button class="sidebar-icon" onclick="openComments('${post.id}')">💬 <span class="sidebar-label" id="comment-count-${post.id}">${post._count.comments}</span></button>
+                    <button class="sidebar-icon" onclick="toggleChatbot()">🤖</button>
+                    <button class="sidebar-icon" onclick="openMessaging('${post.userId}', '${post.user.pseudo}')">✉️</button>
+                    <button class="sidebar-icon" onclick="reportPost('${post.id}')">🚩</button>
+                    ${canDelete(post) ? `<button class="sidebar-icon" style="color:var(--danger)" onclick="deletePost('${post.id}')">🗑️</button>` : ''}
                 </div>
             `;
             feedContainer.appendChild(card);
@@ -130,15 +131,38 @@ document.getElementById('submitCommentBtn')?.addEventListener('click', async () 
     const content = input.value;
     if (!content || !window.currentPostIdForComment) return;
     try {
-        await fetch('/api/comments', {
+        const res = await fetch('/api/comments', {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify({ postId: window.currentPostIdForComment, content })
         });
+        const data = await res.json();
         input.value = '';
+        // UI update immediately if count is returned?
+        // For comments we just reload modal list, but we can update the counter on the slide
+        const counter = document.getElementById(`comment-count-${window.currentPostIdForComment}`);
+        if(counter) counter.innerText = parseInt(counter.innerText) + 1;
+        
         openComments(window.currentPostIdForComment);
     } catch (e) { alert(e.message); }
 });
+
+const reactToPost = async (postId) => {
+    try {
+        let res = await fetch(`/api/posts/${postId}/react`, { method: 'POST', headers: getAuthHeaders() });
+        if (res.status === 409) {
+            res = await fetch(`/api/posts/${postId}/react`, { method: 'DELETE', headers: getAuthHeaders() });
+        }
+        const data = await res.json();
+        if (data.count !== undefined) {
+            document.getElementById(`react-count-${postId}`).innerText = data.count;
+            // Visual feedback
+            const heart = document.querySelector(`#post-${postId} .sidebar-icon`);
+            heart.classList.add('heart-pop');
+            setTimeout(() => heart.classList.remove('heart-pop'), 300);
+        }
+    } catch (e) { console.error(e); }
+};
 
 const reportPost = async (postId) => {
     const reason = prompt('Motif ?');
@@ -151,7 +175,7 @@ const reportPost = async (postId) => {
 
 const canDelete = (post) => {
     const user = JSON.parse(localStorage.getItem('user'));
-    return user && (user.id === post.userId || user.role === 'ADMIN');
+    return user && (user.id === post.userId || user.role === 'ADMIN' || user.role === 'PRO');
 };
 
 const publishPost = async (content, isAnonymous) => {
@@ -174,12 +198,6 @@ const deletePost = async (postId) => {
         await fetch(`/api/posts/${postId}`, { method: 'DELETE', headers: getAuthHeaders() });
         loadFeed(true);
     }
-};
-
-const reactToPost = async (postId) => {
-    const res = await fetch(`/api/posts/${postId}/react`, { method: 'POST', headers: getAuthHeaders() });
-    if (res.status === 409) await fetch(`/api/posts/${postId}/react`, { method: 'DELETE', headers: getAuthHeaders() });
-    // Emit notification manually if needed or await server broadcast
 };
 
 const toggleChatbot = () => window.location.href = '/chatbot.html';

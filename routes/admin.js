@@ -188,6 +188,42 @@ router.patch('/verifications/:id', adminOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// PATCH /api/admin/reports/:id — US-028 & US-150: Traiter un signalement
+router.patch('/reports/:id', adminOnly, async (req, res) => {
+  const { id } = req.params;
+  const { status, note } = req.body; // RESOLVED, DISMISSED
+
+  try {
+    const report = await prisma.report.update({
+      where: { id },
+      data: { status }
+    });
+
+    // If resolved, we might want to suspend the user? (Basic policy: auto-suspend user if a post/comment logic applies)
+    if (status === 'RESOLVED') {
+        const targetUserId = report.postId ? (await prisma.post.findUnique({ where: { id: report.postId } }))?.userId : (await prisma.comment.findUnique({ where: { id: report.commentId } }))?.userId;
+        if (targetUserId) {
+            await prisma.user.update({
+                where: { id: targetUserId },
+                data: { status: 'SUSPENDED' }
+            });
+        }
+    }
+
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: 'RESOLVE_REPORT',
+        targetType: report.targetType,
+        targetId: report.postId || report.commentId,
+        note: note || `Signalement ${status}`
+      }
+    });
+
+    res.json({ message: 'Signalement traité.' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/admin/reports — US-150: Consulter les signalements
 router.get('/reports', adminOnly, async (req, res) => {
   try {

@@ -151,11 +151,13 @@ const loadReports = async () => {
         reports.forEach(r => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="padding: 10px;">${r.targetType} <br><small>${r.reason}</small></td>
-                <td style="padding: 10px;">${r.status}</td>
+                <td style="padding: 10px;">${r.targetType} <br><small>${r.reason || 'S/O'}</small></td>
+                <td style="padding: 10px;">${r.status} <br><small>Par @${r.reporter.pseudo}</small></td>
                 <td colspan="2" style="padding: 10px;">
-                    <button class="action-btn" onclick="resolveReport('${r.id}', 'RESOLVED')">Résoudre</button>
-                    <button class="action-btn" onclick="resolveReport('${r.id}', 'DISMISSED')">Rejeter</button>
+                    ${r.status === 'PENDING' ? `
+                        <button class="action-btn" onclick="resolveReport('${r.id}', 'RESOLVED')">Sanctionner</button>
+                        <button class="action-btn" onclick="resolveReport('${r.id}', 'DISMISSED')" style="color:var(--text-muted)">Ignorer</button>
+                    ` : 'Traité'}
                 </td>
             `;
             tbody.appendChild(tr);
@@ -166,11 +168,12 @@ const loadReports = async () => {
 };
 
 const resolveReport = async (id, status) => {
+    const note = prompt('Motif (optionnel) :');
     try {
         const res = await fetch(`/api/admin/reports/${id}`, {
             method: 'PATCH',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ status })
+            body: JSON.stringify({ status, note })
         });
         loadReports();
     } catch (err) {
