@@ -1,4 +1,4 @@
-// Feed functions logic
+// TikTok Feed Interface Logic
 const loadFeed = async () => {
     try {
         const response = await fetch('/api/posts', {
@@ -12,30 +12,47 @@ const loadFeed = async () => {
         feedContainer.innerHTML = '';
 
         if (posts.length === 0) {
-            feedContainer.innerHTML = '<p style="text-align:center; color: var(--text-muted);">Soyez le premier à poster !</p>';
+            feedContainer.innerHTML = `
+                <div class="post-card-snap" style="justify-content: center; align-items: center; color: var(--text-muted);">
+                    <p>Aucun post pour le moment. Soyez le premier !</p>
+                </div>
+            `;
             return;
         }
 
         posts.forEach(post => {
             const card = document.createElement('div');
-            card.className = 'glass-card post-card animate-in';
+            card.className = 'post-card-snap';
             card.innerHTML = `
-                <div class="post-header">
-                    <span class="post-author">${post.user.pseudo} ${post.user.role === 'PRO' ? '<span class="pro-badge">Vérifié</span>' : ''}</span>
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">${new Date(post.createdAt).toLocaleDateString()}</span>
+                <div style="padding: 40px; text-align: center; font-size: 1.5rem; line-height: 1.4; max-width: 600px; margin: 0 auto;">
+                    ${post.content}
                 </div>
-                <div class="post-content">${post.content}</div>
-                <div class="post-actions">
-                    <button class="action-btn" onclick="reactToPost('${post.id}')">❤️ ${post._count.reactions}</button>
-                    <button class="action-btn" onclick="toggleComments('${post.id}')">💬 ${post._count.comments}</button>
-                    ${canDelete(post) ? `<button class="action-btn" onclick="deletePost('${post.id}')" style="color: var(--danger);">Supprimer</button>` : ''}
-                </div>
-                <div id="comments-${post.id}" class="comments-section" style="display: none; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
-                    <div id="comments-list-${post.id}"></div>
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <input type="text" id="input-comment-${post.id}" placeholder="Ajouter un commentaire..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--glass); color: white;">
-                        <button class="btn btn-primary" style="width: auto; padding: 0 20px;" onclick="addComment('${post.id}')">Poster</button>
+                
+                <div class="post-overlay">
+                    <div style="font-weight: 700; margin-bottom: 5px; font-size: 1.1rem;">
+                        @${post.user.pseudo} ${post.user.role === 'PRO' ? '✅' : ''}
                     </div>
+                    <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 10px;">
+                        ${new Date(post.createdAt).toLocaleDateString()}
+                    </div>
+                </div>
+
+                <div class="post-sidebar">
+                    <div class="sidebar-icon" onclick="reactToPost('${post.id}')">
+                        ❤️
+                        <span class="sidebar-label" style="position: absolute; bottom: -20px;">${post._count.reactions}</span>
+                    </div>
+                    <div class="sidebar-icon" onclick="toggleChatbot()">
+                        🤖
+                        <span class="sidebar-label" style="position: absolute; bottom: -20px;">IA</span>
+                    </div>
+                    <div class="sidebar-icon" onclick="openMessaging('${post.userId}', '${post.user.pseudo}')">
+                        ✉️
+                    </div>
+                    ${canDelete(post) ? `
+                    <div class="sidebar-icon" onclick="deletePost('${post.id}')" style="background: rgba(239, 68, 68, 0.2);">
+                        🗑️
+                    </div>` : ''}
                 </div>
             `;
             feedContainer.appendChild(card);
@@ -49,7 +66,7 @@ const loadFeed = async () => {
 const canDelete = (post) => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user) return false;
-    return user.id === post.userId || user.role === 'ADMIN' || (user.role === 'PRO' && post.user.role === 'MEMBER');
+    return user.id === post.userId || user.role === 'ADMIN';
 };
 
 const publishPost = async (content, isAnonymous) => {
@@ -63,6 +80,7 @@ const publishPost = async (content, isAnonymous) => {
         if (!response.ok) throw new Error(data.error);
         
         document.getElementById('postContent').value = '';
+        document.getElementById('postModal').style.display = 'none';
         loadFeed();
     } catch (error) {
         alert(error.message);
@@ -70,14 +88,13 @@ const publishPost = async (content, isAnonymous) => {
 };
 
 const deletePost = async (postId) => {
-    if (!confirm('Souhaitez-vous supprimer ce post ?')) return;
+    if (!confirm('Supprimer ce post définitivement ?')) return;
     try {
         const response = await fetch(`/api/posts/${postId}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
         });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
+        if (!response.ok) throw new Error('Erreur suppression');
         loadFeed();
     } catch (error) {
         alert(error.message);
@@ -86,72 +103,21 @@ const deletePost = async (postId) => {
 
 const reactToPost = async (postId) => {
     try {
-        const response = await fetch(`/api/posts/${postId}/react`, {
-            method: 'POST',
-            headers: getAuthHeaders()
+        const res = await fetch(`/api/posts/${postId}/react`, { 
+            method: 'POST', 
+            headers: getAuthHeaders() 
         });
-        if (response.status === 409) {
-            // Unreact if already reacted
-            await fetch(`/api/posts/${postId}/react`, {
-                method: 'DELETE',
-                headers: getAuthHeaders()
-            });
+        if (res.status === 409) {
+            await fetch(`/api/posts/${postId}/react`, { method: 'DELETE', headers: getAuthHeaders() });
         }
         loadFeed();
-    } catch (error) {
-        console.error(error);
-    }
+    } catch (e) { console.error(e); }
 };
 
-const toggleComments = async (postId) => {
-    const section = document.getElementById(`comments-${postId}`);
-    if (section.style.display === 'none') {
-        section.style.display = 'block';
-        loadComments(postId);
-    } else {
-        section.style.display = 'none';
-    }
-};
+const toggleChatbot = () => window.location.href = '/chatbot.html';
+const openMessaging = (id, name) => window.location.href = `/messages.html?to=${id}&name=${encodeURIComponent(name)}`;
 
-const loadComments = async (postId) => {
-    const list = document.getElementById(`comments-list-${postId}`);
-    list.innerHTML = '<p style="color: grey; font-size: 0.8rem;">Chargement des commentaires...</p>';
-    
-    try {
-        const response = await fetch(`/api/comments/post/${postId}`, {
-            headers: getAuthHeaders()
-        });
-        const comments = await response.json();
-        list.innerHTML = '';
-        
-        comments.forEach(c => {
-            const div = document.createElement('div');
-            div.style.padding = '8px 0';
-            div.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-            div.innerHTML = `<span style="color: var(--primary); font-size: 0.8rem; font-weight: 600;">${c.user.pseudo}</span>: 
-                             <span style="font-size: 0.8rem;">${c.content}</span>`;
-            list.appendChild(div);
-        });
-    } catch (error) {
-        console.error(error);
-    }
-};
-
-const addComment = async (postId) => {
-    const input = document.getElementById(`input-comment-${postId}`);
-    const content = input.value;
-    if (!content) return;
-
-    try {
-        const response = await fetch('/api/comments', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ postId, content })
-        });
-        input.value = '';
-        loadComments(postId);
-        loadFeed(); // To update comment count
-    } catch (error) {
-        alert(error.message);
-    }
-};
+// UI Listeners
+document.getElementById('showPublishBtn')?.addEventListener('click', () => {
+    document.getElementById('postModal').style.display = 'block';
+});

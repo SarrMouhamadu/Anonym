@@ -7,33 +7,28 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav>
-        <div class="logo">ANONYME</div>
-        <div class="nav-links">
-            <a href="/index.html">Fil</a>
-            <a href="/profile.html">Mon Profil</a>
-            <a href="/messages.html">Messages</a>
-            <a href="/chatbot.html">Chat IA</a>
-            <button onclick="logout()" class="action-btn">Déconnexion</button>
+    <div class="feed-container animate-in" id="feedList">
+        <!-- Posts will be loaded here as full-screen cards -->
+        <div id="loader" style="height: 100vh; display: flex; align-items: center; justify-content: center;">
+            <p>Chargement du fil Anonyme...</p>
         </div>
-    </nav>
+    </div>
 
-    <div class="container animate-in">
-        <!-- Publish post card -->
-        <div class="glass-card post-card" style="margin-top: 40px; margin-bottom: 40px;">
-            <textarea id="postContent" placeholder="Qu'avez-vous en tête ?" style="width: 100%; height: 100px; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: white;" required></textarea>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                <label style="color: var(--text-muted); font-size: 0.9rem;">
-                    <input type="checkbox" id="isAnonymous"> Post anonyme
-                </label>
+    <!-- Floating Action Button for Posting -->
+    <button id="showPublishBtn" class="glass-card" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 2px solid var(--primary); z-index: 100; cursor: pointer;">+</button>
+
+    <!-- Overlay Post Modal -->
+    <div id="postModal" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 500px; z-index: 200; padding: 25px;">
+        <h3 style="margin-bottom: 20px;">Nouvelle Publication</h3>
+        <textarea id="postContent" placeholder="Qu'avez-vous en tête ?" style="width: 100%; height: 150px; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: white;" required></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+            <label style="color: var(--text-muted); font-size: 0.9rem;">
+                <input type="checkbox" id="isAnonymous"> Post anonyme
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="document.getElementById('postModal').style.display='none'" class="btn" style="width: auto; background: transparent; color: white; border: 1px solid var(--border);">Annuler</button>
                 <button id="publishBtn" class="btn btn-primary" style="width: auto; padding: 10px 30px;">Publier</button>
             </div>
-        </div>
-
-        <!-- Feed list -->
-        <div id="feedList">
-            <!-- Posts will be loaded here -->
-            <div id="loader" style="text-align: center; color: var(--text-muted);">Chargement du fil...</div>
         </div>
     </div>
 
