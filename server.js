@@ -30,11 +30,11 @@ app.use('/api/', limiter);
 // Routes
 // Note: les routes seront bouchonnées pour l'instant car elles nécessitent d'être créées plus tard
 app.use('/api/auth',     require('./routes/auth'));
-app.use('/api/posts',    require('./routes/posts'));
-app.use('/api/comments', require('./routes/comments'));
-app.use('/api/messages', require('./routes/messages'));
-app.use('/api/chat',     require('./routes/chat'));
-app.use('/api/admin',    require('./routes/admin'));
+// app.use('/api/posts',    require('./routes/posts'));
+// app.use('/api/comments', require('./routes/comments'));
+// app.use('/api/messages', require('./routes/messages'));
+// app.use('/api/chat',     require('./routes/chat'));
+// app.use('/api/admin',    require('./routes/admin'));
 
 // Socket.io — messagerie temps réel
 io.use((socket, next) => {
