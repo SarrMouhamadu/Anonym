@@ -7,10 +7,17 @@ const loadFeed = async (reset = false) => {
     if (loading || (noMorePosts && !reset)) return;
     loading = true;
     
+    const feedContainer = document.getElementById('feedList');
     if (reset) {
         currentPage = 1;
         noMorePosts = false;
-        document.getElementById('feedList').innerHTML = '<div id="loader" style="height: 100vh; display:flex; align-items:center; justify-content:center;"><p>Chargement...</p></div>';
+        feedContainer.innerHTML = showSkeletons();
+        feedContainer.scrollTop = 0;
+    } else {
+        const loader = document.createElement('div');
+        loader.id = 'loader';
+        loader.innerHTML = showSkeletons(1);
+        feedContainer.appendChild(loader);
     }
 
     try {
@@ -20,12 +27,11 @@ const loadFeed = async (reset = false) => {
         const posts = await response.json();
         if (!response.ok) throw new Error(posts.error);
 
-        const feedContainer = document.getElementById('feedList');
         if (reset) feedContainer.innerHTML = '';
         else document.getElementById('loader')?.remove();
 
         if (posts.length === 0) {
-            if (reset) feedContainer.innerHTML = '<div class="post-card-snap" style="justify-content:center; align-items:center;">Aucun post.</div>';
+            if (reset) feedContainer.innerHTML = '<div class="post-card-snap" style="justify-content:center; align-items:center;">Plus rien à voir !</div>';
             noMorePosts = true;
             loading = false;
             return;
@@ -52,12 +58,12 @@ const loadFeed = async (reset = false) => {
                     <div style="font-size:0.8rem; opacity:0.8;">${new Date(post.createdAt).toLocaleDateString()}</div>
                 </div>
                 <div class="post-sidebar" style="z-index:2;">
-                    <div class="sidebar-icon" onclick="reactToPost('${post.id}')">❤️ <span class="sidebar-label">${post._count.reactions}</span></div>
-                    <div class="sidebar-icon" onclick="openComments('${post.id}')">💬 <span class="sidebar-label">${post._count.comments}</span></div>
-                    <div class="sidebar-icon" onclick="toggleChatbot()">🤖</div>
-                    <div class="sidebar-icon" onclick="openMessaging('${post.userId}', '${post.user.pseudo}')">✉️</div>
-                    <div class="sidebar-icon" onclick="reportPost('${post.id}')">🚩</div>
-                    ${canDelete(post) ? `<div class="sidebar-icon" onclick="deletePost('${post.id}')" style="background:rgba(239,68,68,0.2);">🗑️</div>` : ''}
+                    <button class="sidebar-icon" style="background:none; border:none;" onclick="reactToPost('${post.id}')">❤️ <span class="sidebar-label">${post._count.reactions}</span></button>
+                    <button class="sidebar-icon" style="background:none; border:none;" onclick="openComments('${post.id}')">💬 <span class="sidebar-label">${post._count.comments}</span></button>
+                    <button class="sidebar-icon" style="background:none; border:none;" onclick="toggleChatbot()">🤖</button>
+                    <button class="sidebar-icon" style="background:none; border:none;" onclick="openMessaging('${post.userId}', '${post.user.pseudo}')">✉️</button>
+                    <button class="sidebar-icon" style="background:none; border:none;" onclick="reportPost('${post.id}')">🚩</button>
+                    ${canDelete(post) ? `<button class="sidebar-icon" style="background:none; border:none; color:var(--danger)" onclick="deletePost('${post.id}')">🗑️</button>` : ''}
                 </div>
             `;
             feedContainer.appendChild(card);
@@ -65,14 +71,33 @@ const loadFeed = async (reset = false) => {
 
         currentPage++;
         loading = false;
-        if (reset) feedContainer.scrollTop = 0;
     } catch (error) {
         console.error(error);
         loading = false;
     }
 };
 
-// Scroll listener for Infinite Scroll
+const showSkeletons = (count = 3) => {
+    let html = '';
+    for(let i=0; i<count; i++) {
+        html += `
+            <div class="post-card-snap" style="padding:40px;">
+                <div class="skeleton" style="height:30%; width:80%; margin:0 auto; border-radius:15px;"></div>
+                <div class="post-overlay">
+                    <div class="skeleton skeleton-text" style="width:120px;"></div>
+                    <div class="skeleton skeleton-text" style="width:80px;"></div>
+                </div>
+                <div class="post-sidebar">
+                    <div class="skeleton skeleton-circle"></div>
+                    <div class="skeleton skeleton-circle"></div>
+                    <div class="skeleton skeleton-circle"></div>
+                </div>
+            </div>
+        `;
+    }
+    return html;
+};
+
 document.getElementById('feedList')?.addEventListener('scroll', (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
     if (scrollTop + clientHeight >= scrollHeight - 300) {
@@ -85,7 +110,7 @@ const openComments = async (postId) => {
     modal.style.display = 'flex';
     window.currentPostIdForComment = postId;
     const list = document.getElementById('commentsList');
-    list.innerHTML = 'Chargement...';
+    list.innerHTML = '<div class="skeleton-text"></div>'.repeat(3);
     try {
         const res = await fetch(`/api/comments/post/${postId}`, { headers: getAuthHeaders() });
         const comments = await res.json();
@@ -116,15 +141,11 @@ document.getElementById('submitCommentBtn')?.addEventListener('click', async () 
 });
 
 const reportPost = async (postId) => {
-    const reason = prompt('Pourquoi signalez-vous ce post ?');
+    const reason = prompt('Motif ?');
     if (!reason) return;
     try {
-        await fetch('/api/reports', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ targetType: 'POST', postId, reason })
-        });
-        alert('Signalement envoyé.');
+        await fetch('/api/reports', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ targetType: 'POST', postId, reason }) });
+        showToast('Merci, votre signalement a été reçu !', 'SUCCESS');
     } catch (e) { alert(e.message); }
 };
 
@@ -136,18 +157,13 @@ const canDelete = (post) => {
 const publishPost = async (content, isAnonymous) => {
     const mediaUrl = document.getElementById('postMediaUrl').value;
     const mediaType = document.getElementById('postMediaType').value;
-
     try {
         const response = await fetch('/api/posts', {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify({ content, isAnonymous, mediaUrl, mediaType })
         });
-        if (!response.ok) throw new Error('Erreur publication');
-        
-        // Reset and reload
-        document.getElementById('postContent').value = '';
-        document.getElementById('postMediaUrl').value = '';
+        if (!response.ok) throw new Error('Erreur');
         document.getElementById('postModal').style.display = 'none';
         loadFeed(true);
     } catch (error) { alert(error.message); }
@@ -163,18 +179,11 @@ const deletePost = async (postId) => {
 const reactToPost = async (postId) => {
     const res = await fetch(`/api/posts/${postId}/react`, { method: 'POST', headers: getAuthHeaders() });
     if (res.status === 409) await fetch(`/api/posts/${postId}/react`, { method: 'DELETE', headers: getAuthHeaders() });
+    // Emit notification manually if needed or await server broadcast
 };
 
 const toggleChatbot = () => window.location.href = '/chatbot.html';
 const openMessaging = (id, name) => window.location.href = `/messages.html?to=${id}&name=${encodeURIComponent(name)}`;
 
-document.getElementById('showPublishBtn')?.addEventListener('click', () => {
-    document.getElementById('postModal').style.display = 'block';
-});
-
-// Listener for Publish Button (needs global handler now)
-document.getElementById('publishBtn')?.addEventListener('click', () => {
-    const content = document.getElementById('postContent').value;
-    const isAnonymous = document.getElementById('isAnonymous').checked;
-    publishPost(content, isAnonymous);
-});
+document.getElementById('showPublishBtn')?.addEventListener('click', () => { document.getElementById('postModal').style.display = 'block'; });
+document.getElementById('publishBtn')?.addEventListener('click', () => { publishPost(document.getElementById('postContent').value, document.getElementById('isAnonymous').checked); });

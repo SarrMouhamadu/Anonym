@@ -66,10 +66,32 @@ io.use((socket, next) => {
 });
 
 io.on('connection', (socket) => {
-  socket.on('join', (userId) => socket.join(userId));
+  // Join private room based on userId
+  socket.on('join', (userId) => {
+      socket.join(userId);
+      console.log(`Socket [${socket.id}] a rejoint la room du user [${userId}]`);
+  });
+
+  // US-023: Message en temps réel
   socket.on('message', (data) => {
     io.to(data.receiverId).emit('message', data);
+    // Also notify about unread message count or toast
+    io.to(data.receiverId).emit('notification', { 
+        type: 'MESSAGE', 
+        from: data.senderId,
+        text: 'Nouveau message reçu.'
+    });
   });
+
+  // Reaction notification (emitted from route normally, but let's allow socket broadcast here for demo)
+  socket.on('react', (data) => {
+      io.to(data.targetUserId).emit('notification', { 
+          type: 'LIKE', 
+          from: data.userId,
+          text: 'Quelqu\'un a aimé votre post !'
+      });
+  });
+
   socket.on('disconnect', () => {});
 });
 

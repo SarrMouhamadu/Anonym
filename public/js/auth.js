@@ -1,70 +1,65 @@
-const AUTH_KEY = 'anonyme_token';
+const API_URL = '/api';
 
-// Helper to get headers
 const getAuthHeaders = () => {
-    const token = localStorage.getItem(AUTH_KEY);
+    const token = localStorage.getItem('anonyme_token');
     return {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        'Authorization': `Bearer ${token}`
     };
 };
 
-// Check if logged in
-const checkAuth = () => {
-    const token = localStorage.getItem(AUTH_KEY);
-    if (!token && !window.location.pathname.includes('login.html') && 
-        !window.location.pathname.includes('register.html') &&
-        !window.location.pathname.includes('verify-email.html')) {
-        window.location.href = '/login.html';
-    }
-};
-
-// Login logic
-const login = async (loginIdentifier, password) => {
-    try {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ login: loginIdentifier, password })
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Erreur lors de la connexion');
-
-        localStorage.setItem(AUTH_KEY, data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-
-        // Redirect based on role
-        if (data.user.role === 'ADMIN') window.location.href = '/admin/dashboard.html';
-        else if (data.user.role === 'PRO') window.location.href = '/pro/dashboard.html';
-        else window.location.href = '/index.html';
-
-    } catch (error) {
-        alert(error.message);
-    }
-};
-
-// Register logic
-const register = async (userData) => {
-    try {
-        const response = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Erreur lors de l\'inscription');
-
-        alert(data.message);
-        window.location.href = '/login.html';
-    } catch (error) {
-        alert(error.message);
-    }
-};
-
 const logout = () => {
-    localStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem('anonyme_token');
     localStorage.removeItem('user');
     window.location.href = '/login.html';
 };
+
+const checkAuth = () => {
+    const token = localStorage.getItem('anonyme_token');
+    if (!token && !window.location.pathname.includes('login.html') && !window.location.pathname.includes('register.html')) {
+        window.location.href = '/login.html';
+    }
+};
+
+// --- REAL-TIME NOTIFICATIONS LOGIC ---
+let globalSocket;
+const initGlobalNotifications = () => {
+    const token = localStorage.getItem('anonyme_token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (token && user && typeof io !== 'undefined') {
+        globalSocket = io({ auth: { token } });
+        
+        globalSocket.on('connect', () => {
+            globalSocket.emit('join', user.id);
+        });
+
+        globalSocket.on('notification', (data) => {
+            showToast(data.text, data.type);
+        });
+    }
+};
+
+const showToast = (text, type = 'INFO') => {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    const icon = type === 'MESSAGE' ? '✉️' : (type === 'LIKE' ? '❤️' : '🔔');
+    toast.innerHTML = `<span>${icon}</span> <span>${text}</span>`;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
+};
+
+// Auto-init for every page
+window.addEventListener('DOMContentLoaded', initGlobalNotifications);

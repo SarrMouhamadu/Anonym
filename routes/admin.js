@@ -133,6 +133,18 @@ router.delete('/posts/:id', adminOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/admin/stats — US-164: Statistiques globales
+router.get('/stats', adminOnly, async (req, res) => {
+  try {
+    const userCount = await prisma.user.count();
+    const postCount = await prisma.post.count();
+    const reportCount = await prisma.report.count({ where: { status: 'PENDING' } });
+    const proCount = await prisma.user.count({ where: { role: 'PRO' } });
+
+    res.json({ userCount, postCount, reportCount, proCount });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/admin/verifications — US-169: Consulter les demandes de badge PRO
 router.get('/verifications', adminOnly, async (req, res) => {
   try {

@@ -1,3 +1,14 @@
+const loadStats = async () => {
+    try {
+        const res = await fetch('/api/admin/stats', { headers: getAuthHeaders() });
+        const stats = await res.json();
+        document.getElementById('statUsers').innerText = stats.userCount;
+        document.getElementById('statPosts').innerText = stats.postCount;
+        document.getElementById('statReports').innerText = stats.reportCount;
+        document.getElementById('statPros').innerText = stats.proCount;
+    } catch (e) { console.error(e); }
+};
+
 const loadUsers = async () => {
     try {
         const response = await fetch('/api/admin/users', {

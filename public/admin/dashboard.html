@@ -21,8 +21,27 @@
     </nav>
 
     <div class="container animate-in">
-        <div class="glass-card" style="margin-top: 40px; padding: 20px;">
-            <h2 id="viewTitle">Gestion des Utilisateurs</h2>
+        <div class="container" style="max-width: 1000px; padding: 20px;">
+        <div class="stats-bar" style="display: flex; gap: 20px; margin-bottom: 30px;">
+            <div class="glass-card" style="padding: 15px; flex: 1; text-align: center;">
+                <h4 style="color: var(--primary);">Utilisateurs</h4>
+                <div id="statUsers" style="font-size: 1.5rem; font-weight: 700;">--</div>
+            </div>
+            <div class="glass-card" style="padding: 15px; flex: 1; text-align: center;">
+                <h4 style="color: var(--primary);">Posts</h4>
+                <div id="statPosts" style="font-size: 1.5rem; font-weight: 700;">--</div>
+            </div>
+            <div class="glass-card" style="padding: 15px; flex: 1; text-align: center;">
+                <h4 style="color: #ef4444;">Signalements</h4>
+                <div id="statReports" style="font-size: 1.5rem; font-weight: 700;">--</div>
+            </div>
+            <div class="glass-card" style="padding: 15px; flex: 1; text-align: center;">
+                <h4 style="color: #f59e0b;">PROs</h4>
+                <div id="statPros" style="font-size: 1.5rem; font-weight: 700;">--</div>
+            </div>
+        </div>
+
+        <h2 id="viewTitle" style="margin-bottom: 20px;">Gestion des Utilisateurs</h2>
             <div id="contentTable" style="margin-top: 20px; overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
@@ -52,6 +71,7 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const view = urlParams.get('view') || 'users';
+        loadStats();
 
         if (view === 'users') {
             document.getElementById('viewTitle').innerText = 'Gestion des Utilisateurs';
