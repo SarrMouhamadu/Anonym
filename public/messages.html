@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Anonyme</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <nav>
+        <div class="logo">ANONYME</div>
+        <div class="nav-links">
+            <a href="/index.html">Fil</a>
+            <a href="/profile.html">Mon Profil</a>
+            <a href="/messages.html">Messages</a>
+            <a href="/chatbot.html">Chat IA</a>
+            <button onclick="logout()" class="action-btn">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container animate-in">
+        <div class="glass-card chat-container" style="margin-top: 20px;">
+            <div id="chatPartnerHeader" style="padding: 15px; border-bottom: 1px solid var(--border); font-weight: 700;">
+                Choisissez un destinataire dans le fil (Profil PRO)
+            </div>
+
+            <div id="chatHistory" class="messages-list" style="flex: 1; min-height: 400px; display: flex; flex-direction: column;">
+                <p style="text-align: center; color: var(--text-muted); margin-top: 100px;">Sélectionnez une conversation</p>
+            </div>
+
+            <div id="messageInputArea" style="padding: 20px; border-top: 1px solid var(--border); display: none;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="chatInput" placeholder="Écrire un message..." style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--glass); color: white;">
+                    <button id="sendMsgBtn" class="btn btn-primary" style="width: auto; padding: 0 30px;">Envoyer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/messages.js"></script>
+    <script>
+        checkAuth();
+        initChat();
+
+        // Check if we passed a target userId in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const partnerId = urlParams.get('to');
+        const partnerName = urlParams.get('name');
+
+        if (partnerId) {
+            document.getElementById('chatPartnerHeader').innerText = `Discussion avec ${partnerName || 'Badge Vérifié'}`;
+            document.getElementById('messageInputArea').style.display = 'block';
+            loadConversations(partnerId);
+            
+            document.getElementById('sendMsgBtn').addEventListener('click', () => {
+                const content = document.getElementById('chatInput').value;
+                sendMessageToPartner(partnerId, content);
+            });
+        }
+    </script>
+</body>
+</html>

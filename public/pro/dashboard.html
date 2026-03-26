@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard PRO - Anonyme</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <nav>
+        <div class="logo">ANONYME PRO</div>
+        <div class="nav-links">
+            <a href="/index.html">Fil Public</a>
+            <a href="/pro/dashboard.html">Dashboard</a>
+            <a href="/pro/messages.html">Conversations</a>
+            <button onclick="logout()" class="action-btn">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container animate-in">
+        <div class="glass-card" style="margin-top: 40px; padding: 40px; text-align: center;">
+            <h1 style="margin-bottom: 10px;">Espace Badge Vérifié</h1>
+            <p style="color: var(--text-muted);">Bienvenue ! En tant qu'utilisateur PRO, vous avez accès aux discussions avec les membres et à la modération du fil public.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+            <div class="glass-card p-40">
+                <h3>👥 Mes Conversations</h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">Répondez aux membres qui vous sollicitent en toute confidentialité.</p>
+                <a href="/pro/messages.html" class="btn btn-primary" style="display: inline-block; width: auto; margin-top: 20px; padding: 10px 30px;">Voir mes messages</a>
+            </div>
+
+            <div class="glass-card p-40">
+                <h3>⚖️ Modération</h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">Supprimez les contenus inappropriés sur le fil public.</p>
+                <a href="/index.html" class="btn btn-secondary" style="display: inline-block; width: auto; margin-top: 20px; padding: 10px 30px; border: 1px solid var(--primary); color: white; border-radius: 8px;">Accéder au fil</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || user.role !== 'PRO') {
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - Anonyme</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">ANONYME</div>
+        <div class="nav-links">
+            <a href="/index.html">Fil</a>
+            <a href="/profile.html">Mon Profil</a>
+            <a href="/messages.html">Messages</a>
+            <a href="/chatbot.html">Chat IA</a>
+            <button onclick="logout()" class="action-btn">Déconnexion</button>
+        </div>
+    </nav>
+
+    <div class="container animate-in">
+        <div class="glass-card auth-container" style="text-align: center; margin-top: 40px;">
+            <div id="pfp" style="width: 100px; height: 100px; background: var(--primary); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700;">👤</div>
+            <h2 id="profPseudo">Pseudo</h2>
+            <p id="profName" style="color: var(--text-muted); margin-bottom: 20px;">Nom Complet</p>
+            <div id="profRole" class="pro-badge" style="display: inline-block;">MEMBER</div>
+            
+            <div style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px;">
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Vos posts sont publics par défaut, mais vous pouvez rester anonyme lors de chaque publication.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        checkAuth();
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user) {
+            document.getElementById('profPseudo').innerText = user.pseudo;
+            document.getElementById('profName').innerText = user.fullName;
+            document.getElementById('profRole').innerText = user.role;
+            if (user.role === 'ADMIN') document.getElementById('profRole').style.background = '#f59e0b';
+        }
+    </script>
+</body>
+</html>
