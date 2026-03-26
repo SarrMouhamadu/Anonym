@@ -25,6 +25,11 @@
             <p id="profName" style="color: var(--text-muted); margin-bottom: 20px;">Nom Complet</p>
             <div id="profRole" class="pro-badge" style="display: inline-block;">MEMBER</div>
             
+            <div id="proRequestArea" style="margin-top: 30px; display: none;">
+                <button onclick="requestBadge()" class="btn btn-secondary" style="width: auto; padding: 8px 15px; font-size: 0.8rem; border: 1px solid var(--primary); color: white; border-radius: 8px;">Demander le Badge Vérifié</button>
+                <div id="requestStatus" style="font-size: 0.8rem; margin-top: 10px; color: var(--text-muted);"></div>
+            </div>
+            
             <div style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px;">
                 <p style="font-size: 0.9rem; color: var(--text-muted);">Vos posts sont publics par défaut, mais vous pouvez rester anonyme lors de chaque publication.</p>
             </div>
@@ -40,6 +45,34 @@
             document.getElementById('profName').innerText = user.fullName;
             document.getElementById('profRole').innerText = user.role;
             if (user.role === 'ADMIN') document.getElementById('profRole').style.background = '#f59e0b';
+            
+            // Show request area if not PRO/ADMIN
+            if (user.role === 'MEMBER') {
+                document.getElementById('proRequestArea').style.display = 'block';
+                checkRequestStatus();
+            }
+        }
+
+        async function checkRequestStatus() {
+            const res = await fetch('/api/verifications/my', { headers: getAuthHeaders() });
+            const data = await res.json();
+            if (data.length > 0) {
+                const latest = data[0];
+                document.getElementById('requestStatus').innerText = `Dernière demande: ${latest.status}`;
+            }
+        }
+
+        async function requestBadge() {
+            const reason = prompt('Pourquoi souhaitez-vous devenir PRO ?');
+            if (!reason) return;
+            const res = await fetch('/api/verifications', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ reason })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            checkRequestStatus();
         }
     </script>
 </body>

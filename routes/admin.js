@@ -133,6 +133,49 @@ router.delete('/posts/:id', adminOnly, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/admin/verifications — US-169: Consulter les demandes de badge PRO
+router.get('/verifications', adminOnly, async (req, res) => {
+  try {
+    const verifs = await prisma.verificationRequest.findMany({
+      include: { user: { select: { pseudo: true, fullName: true, email: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(verifs);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PATCH /api/admin/verifications/:id — US-170: Approuver/Rejeter badge
+router.patch('/verifications/:id', adminOnly, async (req, res) => {
+  const { id } = req.params;
+  const { status, note } = req.body; // RESOLVED, DISMISSED (from ReportStatus enum)
+
+  try {
+    const verif = await prisma.verificationRequest.update({
+      where: { id },
+      data: { status }
+    });
+
+    if (status === 'RESOLVED') {
+      await prisma.user.update({
+        where: { id: verif.userId },
+        data: { role: 'PRO' }
+      });
+    }
+
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: status === 'RESOLVED' ? 'APPROVE_VERIFICATION' : 'REJECT_VERIFICATION',
+        targetType: 'USER',
+        targetId: verif.userId,
+        note: note || `Décision de badge: ${status}`
+      }
+    });
+
+    res.json({ message: 'Demande traitée.' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/admin/reports — US-150: Consulter les signalements
 router.get('/reports', adminOnly, async (req, res) => {
   try {

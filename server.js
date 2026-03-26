@@ -14,7 +14,20 @@ const io = new Server(server, {
 });
 
 // Middlewares
-app.use(helmet());
+// Configure CSP for local validation with inline scripts
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      "default-src": ["'self'"],
+      "script-src": ["'self'", "'unsafe-inline'", "https://cdn.socket.io"],
+      "script-src-attr": ["'self'", "'unsafe-inline'"],
+      "style-src": ["'self'", "'unsafe-inline'"],
+      "img-src": ["'self'", "data:", "*"], // allow all media URLs locally
+      "media-src": ["'self'", "data:", "*"],
+      "connect-src": ["'self'", "https://generativelanguage.googleapis.com"]
+    }
+  }
+}));
 app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -36,6 +49,7 @@ app.use('/api/messages', require('./routes/messages'));
 app.use('/api/chat',     require('./routes/chat'));
 app.use('/api/admin',    require('./routes/admin'));
 app.use('/api/reports',  require('./routes/reports'));
+app.use('/api/verifications', require('./routes/verifications'));
 
 // Socket.io — messagerie temps réel
 io.use((socket, next) => {

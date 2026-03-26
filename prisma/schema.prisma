@@ -26,6 +26,7 @@ model User {
   receivedMessages Message[] @relation("ReceiverRelation")
   adminLogs       AdminLog[]
   emailTokens     EmailToken[]
+  verificationRequests VerificationRequest[]
 }
 
 model EmailToken {
@@ -100,6 +101,15 @@ model Report {
   reporter    User         @relation("ReporterRelation", fields: [reporterId], references: [id])
   post        Post?        @relation(fields: [postId], references: [id])
   comment     Comment?     @relation(fields: [commentId], references: [id])
+}
+
+model VerificationRequest {
+  id        String          @id @default(uuid())
+  userId    String
+  reason    String
+  status    ReportStatus    @default(PENDING)
+  createdAt DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id])
 }
 
 model AdminLog {

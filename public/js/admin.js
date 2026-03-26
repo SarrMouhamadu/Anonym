@@ -56,6 +56,40 @@ const updateStatus = async (userId, status) => {
     }
 };
 
+const loadVerifications = async () => {
+    try {
+        const res = await fetch('/api/admin/verifications', { headers: getAuthHeaders() });
+        const data = await res.json();
+        const tbody = document.getElementById('adminDataTable');
+        tbody.innerHTML = '';
+        data.forEach(v => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding:10px;">${v.user.pseudo} <br><small>${v.user.fullName}</small></td>
+                <td style="padding:10px;">${v.reason}</td>
+                <td style="padding:10px;">${v.status}</td>
+                <td style="padding:10px;">
+                    <button class="action-btn" onclick="updateVerifStatus('${v.id}', 'RESOLVED')">Approuver</button>
+                    <button class="action-btn" onclick="updateVerifStatus('${v.id}', 'DISMISSED')" style="color:var(--danger);">Rejeter</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) { console.error(e); }
+};
+
+const updateVerifStatus = async (id, status) => {
+    const note = prompt('Note administrative :');
+    try {
+        await fetch(`/api/admin/verifications/${id}`, {
+            method: 'PATCH',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ status, note })
+        });
+        loadVerifications();
+    } catch (e) { alert(e.message); }
+};
+
 const loadAllPosts = async () => {
     try {
         const response = await fetch('/api/admin/posts', {
