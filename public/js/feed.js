@@ -49,13 +49,18 @@ const loadFeed = async (reset = false) => {
                 mediaHtml = `<video src="${post.mediaUrl}" autoplay muted loop style="position:absolute; width:100%; height:100%; object-fit:cover; opacity:0.6; z-index:0;"></video>`;
             }
 
+            // US-008 & US-009: Clickable pseudo
+            const pseudoHtml = post.isAnonymous 
+                ? `<div style="font-weight:700; color:var(--text-muted);">@Anonyme</div>`
+                : `<div style="font-weight:700; cursor:pointer;" onclick="window.location.href='/profile.html?pseudo=${post.user.pseudo}'">@${post.user.pseudo} ${post.user.role === 'PRO' ? '✅' : ''}</div>`;
+
             card.innerHTML = `
                 ${mediaHtml}
                 <div style="position:relative; z-index:1; padding:40px; text-align:center; font-size:1.5rem; line-height:1.4; max-width:600px; margin:0 auto; text-shadow: 0 2px 10px rgba(0,0,0,0.8);">
                     ${post.content}
                 </div>
                 <div class="post-overlay" style="z-index:2;">
-                    <div style="font-weight:700;">@${post.user.pseudo} ${post.user.role === 'PRO' ? '✅' : ''}</div>
+                    ${pseudoHtml}
                     <div style="font-size:0.8rem; opacity:0.8;">${new Date(post.createdAt).toLocaleDateString()}</div>
                 </div>
                 <div class="post-sidebar" style="z-index:2;">
@@ -138,11 +143,8 @@ document.getElementById('submitCommentBtn')?.addEventListener('click', async () 
         });
         const data = await res.json();
         input.value = '';
-        // UI update immediately if count is returned?
-        // For comments we just reload modal list, but we can update the counter on the slide
         const counter = document.getElementById(`comment-count-${window.currentPostIdForComment}`);
         if(counter) counter.innerText = parseInt(counter.innerText) + 1;
-        
         openComments(window.currentPostIdForComment);
     } catch (e) { alert(e.message); }
 });
@@ -156,10 +158,6 @@ const reactToPost = async (postId) => {
         const data = await res.json();
         if (data.count !== undefined) {
             document.getElementById(`react-count-${postId}`).innerText = data.count;
-            // Visual feedback
-            const heart = document.querySelector(`#post-${postId} .sidebar-icon`);
-            heart.classList.add('heart-pop');
-            setTimeout(() => heart.classList.remove('heart-pop'), 300);
         }
     } catch (e) { console.error(e); }
 };
@@ -174,8 +172,8 @@ const reportPost = async (postId) => {
 };
 
 const canDelete = (post) => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    return user && (user.id === post.userId || user.role === 'ADMIN' || user.role === 'PRO');
+    const u = JSON.parse(localStorage.getItem('user'));
+    return u && (u.id === post.userId || u.role === 'ADMIN' || u.role === 'PRO');
 };
 
 const publishPost = async (content, isAnonymous) => {

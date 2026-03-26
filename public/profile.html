@@ -3,35 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Profil - Anonyme</title>
+    <title>Profil - Anonyme</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav>
+    <nav class="navbar">
         <div class="logo">ANONYME</div>
         <div class="nav-links">
             <a href="/index.html">Fil</a>
-            <a href="/profile.html">Mon Profil</a>
             <a href="/messages.html">Messages</a>
-            <a href="/chatbot.html">Chat IA</a>
-            <button onclick="logout()" class="action-btn">Déconnexion</button>
+            <a href="/chatbot.html">IA</a>
+            <a href="/profile.html">Mon Profil</a>
+            <button onclick="logout()" style="background:none; border:none; color:white; cursor:pointer;">Sortie</button>
         </div>
     </nav>
 
-    <div class="container animate-in">
-        <div class="glass-card auth-container" style="text-align: center; margin-top: 40px;">
-            <div id="pfp" style="width: 100px; height: 100px; background: var(--primary); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700;">👤</div>
-            <h2 id="profPseudo">Pseudo</h2>
-            <p id="profName" style="color: var(--text-muted); margin-bottom: 20px;">Nom Complet</p>
+    <div class="container animate-in" style="max-width: 600px; padding-top: 100px;">
+        <div class="glass-card" style="padding: 30px; text-align: center;">
+            <div id="profAvatar" style="width: 100px; height: 100px; background: var(--primary); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700;">A</div>
+            <h2 id="profPseudo">Chargement...</h2>
+            <p id="profName" style="color: var(--text-muted); margin-bottom: 20px;"></p>
             <div id="profRole" class="pro-badge" style="display: inline-block;">MEMBER</div>
             
             <div id="proRequestArea" style="margin-top: 30px; display: none;">
                 <button onclick="requestBadge()" class="btn btn-secondary" style="width: auto; padding: 8px 15px; font-size: 0.8rem; border: 1px solid var(--primary); color: white; border-radius: 8px;">Demander le Badge Vérifié</button>
                 <div id="requestStatus" style="font-size: 0.8rem; margin-top: 10px; color: var(--text-muted);"></div>
             </div>
+
+            <div id="actionArea" style="margin-top: 20px; display:none;">
+                 <button id="messageThisUser" class="btn btn-primary" style="width:auto">Lui écrire</button>
+            </div>
             
             <div style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px;">
-                <p style="font-size: 0.9rem; color: var(--text-muted);">Vos posts sont publics par défaut, mais vous pouvez rester anonyme lors de chaque publication.</p>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Dernières publications publiques.</p>
+                <div id="profPosts" style="margin-top: 20px; text-align: left;"></div>
             </div>
         </div>
     </div>
@@ -39,31 +44,74 @@
     <script src="js/auth.js"></script>
     <script>
         checkAuth();
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (user) {
-            document.getElementById('profPseudo').innerText = user.pseudo;
-            document.getElementById('profName').innerText = user.fullName;
-            document.getElementById('profRole').innerText = user.role;
-            if (user.role === 'ADMIN') document.getElementById('profRole').style.background = '#f59e0b';
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetPseudo = urlParams.get('pseudo');
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+
+        const initProfile = async () => {
+            if (targetPseudo && targetPseudo !== currentUser.pseudo) {
+                // Public profile view
+                await loadPublicProfile(targetPseudo);
+            } else {
+                // My profile view
+                loadMyProfile();
+            }
+        };
+
+        const loadMyProfile = () => {
+            document.getElementById('profPseudo').innerText = currentUser.pseudo;
+            document.getElementById('profName').innerText = currentUser.fullName;
+            document.getElementById('profRole').innerText = currentUser.role;
+            if (currentUser.role === 'ADMIN') document.getElementById('profRole').style.background = '#f59e0b';
             
-            // Show request area if not PRO/ADMIN
-            if (user.role === 'MEMBER') {
+            if (currentUser.role === 'MEMBER') {
                 document.getElementById('proRequestArea').style.display = 'block';
                 checkRequestStatus();
             }
-        }
+        };
+
+        const loadPublicProfile = async (pseudo) => {
+            try {
+                const res = await fetch(`/api/users/${pseudo}/profile`, { headers: getAuthHeaders() });
+                const user = await res.json();
+                if (!res.ok) throw new Error(user.error);
+
+                document.getElementById('profPseudo').innerText = `@${user.pseudo}`;
+                document.getElementById('profName').innerText = user.fullName || ''; // Only visible if PRO
+                document.getElementById('profRole').innerText = user.role;
+                document.getElementById('profAvatar').innerText = user.pseudo[0].toUpperCase();
+                
+                if (user.role === 'PRO') {
+                    document.getElementById('actionArea').style.display = 'block';
+                    document.getElementById('messageThisUser').onclick = () => {
+                        window.location.href = `/messages.html?to=${user.id}&name=${encodeURIComponent(user.pseudo)}`;
+                    };
+                }
+
+                // Load posts
+                const postsDiv = document.getElementById('profPosts');
+                user.posts.forEach(p => {
+                    const d = document.createElement('div');
+                    d.className = 'glass-card';
+                    d.style.marginBottom = '10px';
+                    d.style.padding = '15px';
+                    d.innerHTML = `<p>${p.content}</p><small style="color:var(--text-muted)">❤️ ${p._count.reactions}</small>`;
+                    postsDiv.appendChild(d);
+                });
+
+            } catch (err) { alert(err.message); window.location.href='/index.html'; }
+        };
 
         async function checkRequestStatus() {
             const res = await fetch('/api/verifications/my', { headers: getAuthHeaders() });
             const data = await res.json();
             if (data.length > 0) {
-                const latest = data[0];
-                document.getElementById('requestStatus').innerText = `Dernière demande: ${latest.status}`;
+                document.getElementById('requestStatus').innerText = `Dernière demande: ${data[0].status}`;
             }
         }
 
         async function requestBadge() {
-            const reason = prompt('Pourquoi souhaitez-vous devenir PRO ?');
+            const reason = prompt('Pourquoi devenir PRO ?');
             if (!reason) return;
             const res = await fetch('/api/verifications', {
                 method: 'POST',
@@ -74,6 +122,8 @@
             alert(data.message || data.error);
             checkRequestStatus();
         }
+
+        initProfile();
     </script>
 </body>
 </html>
