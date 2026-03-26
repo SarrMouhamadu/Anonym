@@ -1,10 +1,16 @@
 module.exports = {
-  apps: [{
-    name: 'anonyme',
-    script: 'server.js',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    env: { NODE_ENV: 'production' }
-  }]
+  apps: [
+    {
+      name: 'anonyme-v2',
+      script: 'server.js',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3000
+      }
+    }
+  ]
 };
