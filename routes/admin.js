@@ -100,8 +100,41 @@ router.patch('/users/:id/status', async (req, res) => {
 });
 
 // US-028 — Traiter un signalement (admin)
+// GET /api/admin/posts — US-156: Modération des contenus
+router.get('/posts', adminOnly, async (req, res) => {
+  try {
+    const posts = await prisma.post.findMany({
+      include: { user: { select: { pseudo: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(posts);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// DELETE /api/admin/posts/:id — US-033: Suppression administrative avec log
+router.delete('/posts/:id', adminOnly, async (req, res) => {
+  const { id } = req.params;
+  const { note } = req.body;
+
+  try {
+    await prisma.post.delete({ where: { id } });
+    
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: 'DELETE_POST',
+        targetType: 'POST',
+        targetId: id,
+        note: note || 'Suppression par modération'
+      }
+    });
+
+    res.json({ message: 'Post supprimé et logué.' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/admin/reports — US-150: Consulter les signalements
-router.get('/reports', async (req, res) => {
+router.get('/reports', adminOnly, async (req, res) => {
   try {
     const { status } = req.query; // PENDING, RESOLVED, DISMISSED
     const reports = await prisma.report.findMany({

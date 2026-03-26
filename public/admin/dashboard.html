@@ -12,6 +12,7 @@
         <div class="nav-links">
             <a href="/index.html">Fil Public</a>
             <a href="/admin/dashboard.html">Utilisateurs</a>
+            <a href="/admin/dashboard.html?view=posts">Contenus</a>
             <a href="/admin/dashboard.html?view=reports">Signalements</a>
             <a href="/admin/dashboard.html?view=logs">Logs</a>
             <button onclick="logout()" class="action-btn">Déconnexion</button>
@@ -54,6 +55,9 @@
         if (view === 'users') {
             document.getElementById('viewTitle').innerText = 'Gestion des Utilisateurs';
             loadUsers();
+        } else if (view === 'posts') {
+            document.getElementById('viewTitle').innerText = 'Gestion des Contenus (Posts)';
+            loadAllPosts();
         } else if (view === 'reports') {
              document.getElementById('viewTitle').innerText = 'Signalements';
              loadReports();

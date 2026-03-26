@@ -56,6 +56,43 @@ const updateStatus = async (userId, status) => {
     }
 };
 
+const loadAllPosts = async () => {
+    try {
+        const response = await fetch('/api/admin/posts', {
+            headers: getAuthHeaders()
+        });
+        const posts = await response.json();
+        const tbody = document.getElementById('adminDataTable');
+        tbody.innerHTML = '';
+        
+        posts.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding: 10px;">@${p.user.pseudo} <br><small>${p.content.substring(0, 30)}...</small></td>
+                <td style="padding: 10px;">${p.mediaType} ${p.mediaUrl ? '🔗' : ''}</td>
+                <td style="padding: 10px;">${p.status}</td>
+                <td colspan="2" style="padding: 10px;">
+                    <button class="action-btn" onclick="deletePostAdmin('${p.id}')" style="color: var(--danger);">Supprim.</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) { console.error(e); }
+};
+
+const deletePostAdmin = async (id) => {
+    const note = prompt('Motif de suppression :');
+    if (!note) return;
+    try {
+        const res = await fetch(`/api/admin/posts/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ note })
+        });
+        loadAllPosts();
+    } catch (e) { console.error(e); }
+};
+
 const loadReports = async () => {
     try {
         const response = await fetch('/api/admin/reports', {
