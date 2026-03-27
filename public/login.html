@@ -8,6 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/auth.js"></script>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center px-4">
   <div class="mb-6 text-center">
@@ -159,6 +161,11 @@
     // Form Submission: Register
     formRegister.onsubmit = async (e) => {
       e.preventDefault();
+      const charterChecked = document.getElementById('reg-charte').checked;
+      if (!charterChecked) {
+          alert("Vous devez accepter la charte de bienveillance pour continuer.");
+          return;
+      }
       try {
         const userData = {
             fullName: document.getElementById('reg-name').value,
