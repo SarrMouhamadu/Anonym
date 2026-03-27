@@ -1,47 +1,201 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - Anonyme</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — Anonyme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-    <div class="auth-container animate-in">
-        <div class="glass-card auth-container">
-            <div class="auth-header">
-                <h1>ANONYME</h1>
-                <p>Heureux de vous revoir.</p>
-            </div>
-            
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginIdentifier">Email ou Pseudo</label>
-                    <input type="text" id="loginIdentifier" placeholder="Email ou Pseudo" required>
-                </div>
+<body class="min-h-screen flex flex-col items-center justify-center px-4">
+  <div class="mb-6 text-center">
+    <h1 class="text-4xl text-[#1A56A0] mb-2">Anonyme</h1>
+    <p class="text-[--color-text-muted] max-w-[340px] text-sm">Un espace pour vous exprimer librement, sans jugement et en toute confidentialité.</p>
+  </div>
 
-                <div class="form-group">
-                    <label for="password">Mot de passe</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Se connecter</button>
-            </form>
-
-            <div class="auth-footer">
-                Pas encore de compte ? <a href="/register.html">S'inscrire</a>
-            </div>
-        </div>
+  <div class="bg-white border border-[#E2EAF2] rounded-[16px] w-full max-w-[420px] p-7 shadow-[--shadow-md] animate-fade-up">
+    <!-- Tabs -->
+    <div class="bg-[--color-bg] p-1.5 rounded-[12px] flex mb-8">
+      <button id="tab-register" class="flex-1 py-2 text-sm font-medium rounded-[10px] bg-white text-[--color-text-primary] shadow-sm">S'inscrire</button>
+      <button id="tab-login" class="flex-1 py-2 text-sm font-medium rounded-[10px] text-[--color-text-muted]">Se connecter</button>
     </div>
 
-    <script src="js/auth.js"></script>
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const loginIdentifier = document.getElementById('loginIdentifier').value;
-            const password = document.getElementById('password').value;
-            login(loginIdentifier, password);
-        });
-    </script>
+    <!-- Registration Form -->
+    <form id="form-register" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-[--color-text-muted] mb-1.5">Nom complet</label>
+          <input type="text" id="reg-name" placeholder="Jean Dupont" class="w-full h-11 px-4 text-sm border border-[--color-border] rounded-[--radius-md] focus:border-[--color-primary] outline-none" required>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-[--color-text-muted] mb-1.5">Pseudonyme</label>
+          <input type="text" id="reg-pseudo" placeholder="ninja_secret" class="w-full h-11 px-4 text-sm border border-[--color-border] rounded-[--radius-md] focus:border-[--color-primary] outline-none" required>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-[--color-text-muted] mb-1.5">Contact</label>
+        <div class="flex gap-2 mb-3">
+          <button type="button" id="btn-email" class="flex-1 py-2 text-xs border border-[--color-primary] text-[--color-primary] rounded-[--radius-md] font-medium bg-[--color-primary-pale]">Email</button>
+          <button type="button" id="btn-phone" class="flex-1 py-2 text-xs border border-[--color-border] text-[--color-text-muted] rounded-[--radius-md] font-medium">Téléphone</button>
+        </div>
+        <input type="email" id="reg-contact" placeholder="votre@email.com" class="w-full h-11 px-4 text-sm border border-[--color-border] rounded-[--radius-md] focus:border-[--color-primary] outline-none" required>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase text-[--color-text-muted] mb-1.5">Mot de passe</label>
+        <input type="password" id="reg-pass" placeholder="Minimum 8 caractères" class="w-full h-11 px-4 text-sm border border-[--color-border] rounded-[--radius-md] focus:border-[--color-primary] outline-none" required minlength="8">
+      </div>
+
+      <!-- Charter -->
+      <div class="bg-[--color-bg] border border-[--color-border] rounded-[10px] p-4 text-[13px] text-[--color-text-body] space-y-2">
+        <div class="flex gap-3">
+          <div class="w-1.5 h-1.5 bg-[--color-text-muted] rounded-full mt-1.5 shrink-0"></div>
+          <p>Aucun contenu blessant, moqueur ou dénigrant</p>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-1.5 h-1.5 bg-[--color-text-muted] rounded-full mt-1.5 shrink-0"></div>
+          <p>Aucun contenu romantique ou de dating</p>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-1.5 h-1.5 bg-[--color-text-muted] rounded-full mt-1.5 shrink-0"></div>
+          <p>Respect de la confidentialité des autres membres</p>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-1.5 h-1.5 bg-[--color-text-muted] rounded-full mt-1.5 shrink-0"></div>
+          <p>Aucun contenu encourageant l'automutilation</p>
+        </div>
+      </div>
+
+      <label class="flex items-center gap-3 cursor-pointer py-2">
+        <input type="checkbox" id="reg-charter" class="w-5 h-5 rounded border border-[--color-border] accent-[--color-primary]" required>
+        <span class="text-xs text-[--color-text-body]">J'ai lu et j'accepte la charte de bienveillance</span>
+      </label>
+
+      <button type="submit" class="w-full h-11 bg-[--color-primary] text-white font-medium rounded-[--radius-md]">Créer mon compte</button>
+    </form>
+
+    <!-- Success Screen (Hidden initially) -->
+    <div id="reg-success" class="hidden text-center py-6 animate-fade-up">
+      <div class="w-16 h-16 bg-[--color-success-pale] text-[--color-success] rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <h2 class="text-xl font-bold text-[--color-text-primary] mb-2">Compte créé !</h2>
+      <p class="text-sm text-[--color-text-muted] mb-8 px-4" id="success-msg">Un lien de vérification a été envoyé. Cliquez sur le lien pour activer votre compte.</p>
+      <button id="goto-login" class="w-full h-11 bg-[--color-primary] text-white font-medium rounded-[--radius-md]">Se connecter</button>
+    </div>
+
+    <!-- Login Form (Hidden initially) -->
+    <form id="form-login" class="hidden space-y-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase text-[--color-text-muted] mb-1.5">Email ou Téléphone</label>
+        <input type="text" id="login-id" placeholder="Ex: ninja_secret" class="w-full h-11 px-4 text-sm border border-[--color-border] rounded-[--radius-md] focus:border-[--color-primary] outline-none" required>
+      </div>
+
+      <div>
+        <div class="flex justify-between items-center mb-1.5">
+          <label class="text-xs font-semibold uppercase text-[--color-text-muted]">Mot de passe</label>
+          <a href="#" class="text-[11px] font-medium text-[--color-primary]">Mot de passe oublié ?</a>
+        </div>
+        <input type="password" id="login-pass" placeholder="••••••••" class="w-full h-11 px-4 text-sm border border-[--color-border] rounded-[--radius-md] focus:border-[--color-primary] outline-none" required>
+        <p id="login-error" class="hidden text-[11px] text-[--color-danger] mt-1.5 font-medium">Identifiants incorrects</p>
+      </div>
+
+      <button type="submit" id="login-btn" class="w-full h-11 bg-[--color-primary] text-white font-medium rounded-[--radius-md] flex items-center justify-center transition-all">
+        <span id="login-text">Se connecter</span>
+        <div id="login-loader" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    const tabRegister = document.getElementById('tab-register');
+    const tabLogin = document.getElementById('tab-login');
+    const formRegister = document.getElementById('form-register');
+    const formLogin = document.getElementById('form-login');
+    const regSuccess = document.getElementById('reg-success');
+
+    const btnEmail = document.getElementById('btn-email');
+    const btnPhone = document.getElementById('btn-phone');
+    const regContact = document.getElementById('reg-contact');
+
+    // Switch Tabs
+    tabRegister.onclick = () => {
+      tabRegister.classList.add('bg-white', 'shadow-sm', 'text-[--color-text-primary]');
+      tabRegister.classList.remove('text-[--color-text-muted]');
+      tabLogin.classList.remove('bg-white', 'shadow-sm', 'text-[--color-text-primary]');
+      tabLogin.classList.add('text-[--color-text-muted]');
+      formRegister.classList.remove('hidden');
+      formLogin.classList.add('hidden');
+      regSuccess.classList.add('hidden');
+    };
+
+    tabLogin.onclick = () => {
+      tabLogin.classList.add('bg-white', 'shadow-sm', 'text-[--color-text-primary]');
+      tabLogin.classList.remove('text-[--color-text-muted]');
+      tabRegister.classList.remove('bg-white', 'shadow-sm', 'text-[--color-text-primary]');
+      tabRegister.classList.add('text-[--color-text-muted]');
+      formLogin.classList.remove('hidden');
+      formRegister.classList.add('hidden');
+      regSuccess.classList.add('hidden');
+    };
+
+    // Contact Type Toggle
+    btnEmail.onclick = () => {
+      btnEmail.className = 'flex-1 py-2 text-xs border border-[--color-primary] text-[--color-primary] rounded-[--radius-md] font-medium bg-[--color-primary-pale]';
+      btnPhone.className = 'flex-1 py-2 text-xs border border-[--color-border] text-[--color-text-muted] rounded-[--radius-md] font-medium';
+      regContact.type = 'email';
+      regContact.placeholder = 'votre@email.com';
+    };
+    btnPhone.onclick = () => {
+      btnPhone.className = 'flex-1 py-2 text-xs border border-[--color-primary] text-[--color-primary] rounded-[--radius-md] font-medium bg-[--color-primary-pale]';
+      btnEmail.className = 'flex-1 py-2 text-xs border border-[--color-border] text-[--color-text-muted] rounded-[--radius-md] font-medium';
+      regContact.type = 'tel';
+      regContact.placeholder = '+221 77 ...';
+    };
+
+    // Form Submission: Register
+    formRegister.onsubmit = (e) => {
+      e.preventDefault();
+      const contactVal = regContact.value;
+      const contactType = regContact.type === 'email' ? 'email' : 'téléphone';
+      
+      document.getElementById('success-msg').innerText = `Un lien de vérification a été envoyé à ${contactVal}. Cliquez sur le lien pour activer votre compte.`;
+      
+      formRegister.classList.add('hidden');
+      regSuccess.classList.remove('hidden');
+    };
+
+    document.getElementById('goto-login').onclick = () => {
+      tabLogin.click();
+    };
+
+    // Form Submission: Login
+    formLogin.onsubmit = (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('login-btn');
+      const text = document.getElementById('login-text');
+      const loader = document.getElementById('login-loader');
+      const error = document.getElementById('login-error');
+
+      btn.disabled = true;
+      text.classList.add('hidden');
+      loader.classList.remove('hidden');
+      error.classList.add('hidden');
+
+      setTimeout(() => {
+        btn.disabled = false;
+        text.classList.remove('hidden');
+        loader.classList.add('hidden');
+        error.classList.remove('hidden');
+        // If login was real, use window.location.href = 'index.html';
+        if (document.getElementById('login-id').value === 'admin' && document.getElementById('login-pass').value === 'admin') {
+           window.location.href = 'index.html';
+        }
+      }, 1200);
+    };
+  </script>
 </body>
 </html>

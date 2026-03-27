@@ -16,9 +16,44 @@ const logout = () => {
 
 const checkAuth = () => {
     const token = localStorage.getItem('anonyme_token');
-    if (!token && !window.location.pathname.includes('login.html') && !window.location.pathname.includes('register.html')) {
+    if (!token && !window.location.pathname.includes('login.html') && !window.location.pathname.includes('register.html') && !window.location.pathname.includes('verify-email.html')) {
         window.location.href = '/login.html';
     }
+};
+
+// --- AUTH LOGIC ---
+const login = async (loginIdentifier, password) => {
+    try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login: loginIdentifier, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        localStorage.setItem('anonyme_token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        showToast('Connexion réussie !', 'SUCCESS');
+        setTimeout(() => window.location.href = '/index.html', 1000);
+        
+    } catch (e) { alert(e.message); }
+};
+
+const register = async (userData) => {
+    try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        alert(data.message || 'Compte créé !');
+        window.location.href = '/login.html';
+    } catch (e) { alert(e.message); }
 };
 
 // --- REAL-TIME NOTIFICATIONS LOGIC ---

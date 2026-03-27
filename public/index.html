@@ -1,72 +1,277 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anonyme - Fil Communautaire</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fil Communautaire — Anonyme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-    <div class="feed-container animate-in" id="feedList">
-        <!-- Posts will be loaded here as full-screen cards -->
-        <div id="loader" style="height: 100vh; display: flex; align-items: center; justify-content: center;">
-            <p>Chargement du fil Anonyme...</p>
+<body class="bg-[--color-bg]">
+  <!-- Navbar -->
+  <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-[#E2EAF2] z-50 h-16 flex items-center px-4 md:px-6">
+    <div class="max-w-[1200px] w-full mx-auto flex justify-between items-center">
+      <h1 class="text-2xl text-[#1A56A0] select-none cursor-pointer" onclick="location.href='index.html'">Anonyme</h1>
+      <div class="flex items-center gap-2 md:gap-5">
+        <a href="chatbot.html" class="p-2 md:px-4 md:py-2 text-[--color-text-body] hover:bg-[--color-primary-pale] rounded-full transition-all text-sm font-medium flex items-center gap-2">
+           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
+           <span class="hidden md:inline">Chatbot</span>
+        </a>
+        <button class="p-2 md:px-4 md:py-2 text-[--color-text-body] hover:bg-[--color-primary-pale] rounded-full transition-all text-sm font-medium flex items-center gap-2">
+           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>
+           <span class="hidden md:inline">Don</span>
+        </button>
+        <div class="w-9 h-9 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold border border-[--color-primary] cursor-pointer hover:shadow-md transition-all">S</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="pt-24 pb-20 px-4 md:px-0 max-w-[680px] mx-auto min-h-screen">
+    <!-- Composer -->
+    <div class="glass-card p-4 transition-all hover:border-[--color-primary-light] mb-8">
+      <div class="flex gap-4">
+        <div class="w-9 h-9 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold shrink-0">S</div>
+        <div class="flex-1">
+          <textarea id="composer-textarea" rows="1" placeholder="Exprimez-vous librement…" class="w-full bg-transparent border-none resize-none focus:ring-0 text-sm md:text-base text-[--color-text-body] outline-none min-h-[40px] pt-1" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+          <div id="anon-badge" class="hidden inline-flex items-center mt-3 bg-[--color-primary-pale] text-[--color-primary] text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full border border-[--color-primary]/20">ANONYME</div>
         </div>
+      </div>
+      <div class="mt-4 pt-4 border-t border-[#F0F4F8] flex justify-between items-center">
+        <div class="flex items-center gap-2.5">
+          <label class="switch">
+            <input type="checkbox" id="composer-anon-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="text-xs font-semibold text-[--color-text-muted]">Anonyme</span>
+        </div>
+        <button id="btn-publish" class="bg-[--color-primary] text-white text-sm font-semibold px-6 py-2 rounded-[8px] hover:opacity-90 transition-all opacity-50 cursor-not-allowed" disabled>Publier</button>
+      </div>
     </div>
 
-    <!-- Floating Action Button for Posting -->
-    <button id="showPublishBtn" class="glass-card" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 2px solid var(--primary); z-index: 100; cursor: pointer;">+</button>
+    <!-- Filters -->
+    <div class="flex gap-2 overflow-x-auto hide-scrollbar pb-6">
+      <button class="shrink-0 px-6 py-2.5 text-xs font-bold rounded-full bg-[--color-primary] text-white shadow-sm">Récent</button>
+      <button class="shrink-0 px-6 py-2.5 text-xs font-bold rounded-full bg-white border border-[#E2EAF2] text-[--color-text-muted] hover:bg-white/50">Populaire</button>
+      <button class="shrink-0 px-6 py-2.5 text-xs font-bold rounded-full bg-white border border-[#E2EAF2] text-[--color-text-muted] hover:bg-white/50">Mes posts</button>
+    </div>
 
-    <!-- Overlay Post Modal -->
-    <div id="postModal" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 500px; z-index: 200; padding: 25px;">
-        <h3 style="margin-bottom: 20px;">Nouvelle Publication</h3>
-        <textarea id="postContent" placeholder="Qu'avez-vous en tête ?" style="width: 100%; height: 100px; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: white;" required></textarea>
-        
-        <div style="margin-top: 15px;">
-            <input type="text" id="postMediaUrl" placeholder="Lien image ou vidéo (optionnel)" style="width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: white;">
-            <select id="postMediaType" style="width: 100%; margin-top: 10px; padding: 10px; background: var(--glass); border: 1px solid var(--border); border-radius: 8px; color: white;">
-                <option value="TEXT">Texte</option>
-                <option value="IMAGE">Image</option>
-                <option value="VIDEO">Vidéo</option>
-            </select>
-        </div>
+    <!-- Feed List -->
+    <div id="feed-list" class="space-y-6">
+      <!-- Posts will be prepended here in JS -->
+    </div>
+  </main>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-            <label style="color: var(--text-muted); font-size: 0.9rem;">
-                <input type="checkbox" id="isAnonymous"> Post anonyme
-            </label>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="document.getElementById('postModal').style.display='none'" class="btn" style="width: auto; background: transparent; color: white; border: 1px solid var(--border);">Annuler</button>
-                <button id="publishBtn" class="btn btn-primary" style="width: auto; padding: 10px 30px;">Publier</button>
+  <!-- Post Template -->
+  <template id="post-template">
+    <div class="glass-card p-4 animate-fade-up">
+      <div class="flex justify-between items-start mb-4">
+        <div class="flex items-center gap-3">
+          <div class="post-avatar w-8.5 h-8.5 rounded-full flex items-center justify-center font-bold text-sm shrink-0"></div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="post-author text-sm font-bold text-[--color-text-primary]"></span>
+              <span class="anon-chip hidden bg-[--color-primary-pale] text-[--color-primary] text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full border border-[--color-primary]/20">ANONYME</span>
             </div>
+            <p class="text-[11px] text-[--color-text-muted] font-medium post-time"></p>
+          </div>
         </div>
-    </div>
+        <button class="text-[--color-text-muted] hover:text-[--color-danger] text-[11px] transition-all font-semibold uppercase tracking-wider">Signaler</button>
+      </div>
+      
+      <p class="text-sm md:text-[14px] text-[--color-text-body] leading-[1.7] mb-6 post-content"></p>
 
-    <!-- Overlay Comments Modal -->
-    <div id="commentsModal" class="glass-card" style="display: none; position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; height: 60vh; z-index: 300; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden;">
-        <div style="padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-            <h4 style="margin: 0;">Commentaires</h4>
-            <button onclick="document.getElementById('commentsModal').style.display='none'" class="action-btn" style="font-size: 1.5rem;">×</button>
-        </div>
-        <div id="commentsList" style="flex: 1; overflow-y: auto; padding: 20px;">
-            <!-- Comments here -->
-        </div>
-        <div style="padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px;">
-            <input type="text" id="commentInput" placeholder="Ajouter un commentaire..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--glass); color: white;">
-            <button id="submitCommentBtn" class="btn btn-primary" style="width: auto; padding: 0 20px;">Envoyer</button>
-        </div>
-    </div>
+      <div class="pt-4 border-t border-[#F7FAFD] flex items-center gap-6">
+        <button class="action-btn flex items-center gap-2 group transition-all" data-action="like">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center group-hover:bg-[--color-heart-pale] text-[#E8879A] transition-all">
+             <svg class="heart-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          </div>
+          <span class="text-xs font-bold text-[--color-text-muted] group-hover:text-[#E8879A] post-likes-count"></span>
+        </button>
+        <button class="action-btn flex items-center gap-2 group transition-all" data-action="comment">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center group-hover:bg-[--color-primary-pale] text-[--color-text-muted] group-hover:text-[--color-primary] transition-all">
+             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          </div>
+          <span class="text-xs font-bold text-[--color-text-muted] group-hover:text-[--color-primary] post-comments-count"></span>
+        </button>
+      </div>
 
-    <script src="js/auth.js"></script>
-    <script src="js/feed.js"></script>
-    <script>
-        checkAuth();
-        document.getElementById('publishBtn').addEventListener('click', () => {
-            const content = document.getElementById('postContent').value;
-            const isAnonymous = document.getElementById('isAnonymous').checked;
-            publishPost(content, isAnonymous);
-        });
-        loadFeed();
-    </script>
+      <!-- Comments Section -->
+      <div class="comments-section hidden pt-4 mt-4 border-t border-[#F7FAFD]">
+        <div class="comments-list space-y-4 mb-5">
+           <!-- Comments injected here -->
+        </div>
+        <div class="flex gap-3">
+          <div class="w-7 h-7 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold text-[10px] shrink-0">S</div>
+          <div class="flex-1 relative">
+            <input type="text" placeholder="Ajouter un commentaire..." class="w-full bg-[--color-bg] border-none rounded-[20px] h-9 pl-4 pr-12 text-xs text-[--color-text-body] outline-none border focus:ring-1 focus:ring-[--color-primary]/20">
+            <button class="absolute right-2 top-1.5 text-[--color-primary] text-[11px] font-bold hover:underline">Envoyer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    const composer = document.getElementById('composer-textarea');
+    const anonToggle = document.getElementById('composer-anon-toggle');
+    const anonBadge = document.getElementById('anon-badge');
+    const publishBtn = document.getElementById('btn-publish');
+    const feedList = document.getElementById('feed-list');
+    const template = document.getElementById('post-template');
+
+    // Composer interactions
+    composer.oninput = () => {
+      composer.style.height = '';
+      composer.style.height = composer.scrollHeight + 'px';
+      
+      if (composer.value.trim() !== "") {
+        publishBtn.disabled = false;
+        publishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      } else {
+        publishBtn.disabled = true;
+        publishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      }
+    };
+
+    anonToggle.onchange = () => {
+      anonBadge.classList.toggle('hidden', !anonToggle.checked);
+    };
+
+    // Render Post Function
+    function renderPost(data, isNew = false) {
+      const clone = template.content.cloneNode(true);
+      const card = clone.querySelector('.glass-card');
+      const avatar = clone.querySelector('.post-avatar');
+      const author = clone.querySelector('.post-author');
+      const time = clone.querySelector('.post-time');
+      const content = clone.querySelector('.post-content');
+      const anonChip = clone.querySelector('.anon-chip');
+      const likesCount = clone.querySelector('.post-likes-count');
+      const commentsCount = clone.querySelector('.post-comments-count');
+      const commSection = clone.querySelector('.comments-section');
+      const commList = clone.querySelector('.comments-list');
+
+      content.innerText = data.text;
+      time.innerText = data.time || "À l'instant";
+      likesCount.innerText = data.likes;
+      commentsCount.innerText = data.comments.length;
+
+      if (data.isAnonymous) {
+        author.innerText = "Anonyme";
+        anonChip.classList.remove('hidden');
+        avatar.innerText = "A";
+        avatar.className = "post-avatar w-8.5 h-8.5 rounded-full flex items-center justify-center font-bold text-sm shrink-0 bg-[#F0F4F8] text-[#7A92A8]";
+      } else {
+        author.innerText = data.author;
+        avatar.innerText = data.author[0];
+        avatar.className = "post-avatar w-8.5 h-8.5 rounded-full flex items-center justify-center font-bold text-sm shrink-0 bg-[#EAF3FB] text-[#1A56A0]";
+      }
+
+      // Actions logic
+      const likeBtn = clone.querySelector('[data-action="like"]');
+      const commentBtn = clone.querySelector('[data-action="comment"]');
+      const heartIcon = clone.querySelector('.heart-icon');
+
+      likeBtn.onclick = () => {
+         const isActive = heartIcon.getAttribute('fill') === 'currentColor';
+         if (isActive) {
+           heartIcon.setAttribute('fill', 'none');
+           likesCount.innerText = parseInt(likesCount.innerText) - 1;
+           likeBtn.querySelector('.w-8').classList.remove('bg-[--color-heart-pale]');
+         } else {
+           heartIcon.setAttribute('fill', 'currentColor');
+           likesCount.innerText = parseInt(likesCount.innerText) + 1;
+           // Animation scale pulse
+           heartIcon.parentElement.style.transform = 'scale(1.3)';
+           setTimeout(() => heartIcon.parentElement.style.transform = '', 200);
+           likeBtn.querySelector('.w-8').classList.add('bg-[--color-heart-pale]');
+         }
+      };
+
+      commentBtn.onclick = () => {
+        commSection.classList.toggle('hidden');
+      };
+
+      // Injects existing comments
+      data.comments.forEach(c => {
+        const div = document.createElement('div');
+        div.className = "flex gap-3";
+        div.innerHTML = `
+          <div class="w-6.5 h-6.5 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold text-[9px] shrink-0">${c.author[0]}</div>
+          <div class="bg-[--color-bg] rounded-r-[10px] rounded-bl-[10px] p-2.5 max-w-[85%]">
+            <p class="text-[12px] text-[--color-text-body] leading-relaxed">${c.text}</p>
+          </div>
+        `;
+        commList.appendChild(div);
+      });
+
+      if (isNew) {
+        feedList.prepend(card);
+      } else {
+        feedList.appendChild(card);
+      }
+    }
+
+    // Publish Logic
+    publishBtn.onclick = () => {
+      const data = {
+        author: "S",
+        isAnonymous: anonToggle.checked,
+        text: composer.value,
+        likes: 0,
+        comments: [],
+        time: "À l'instant"
+      };
+      
+      renderPost(data, true);
+      
+      composer.value = "";
+      composer.style.height = '';
+      anonToggle.checked = false;
+      anonBadge.classList.add('hidden');
+      publishBtn.disabled = true;
+      publishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    };
+
+    // Pre-fill Feed
+    const initialPosts = [
+      {
+        author: "A",
+        isAnonymous: true,
+        text: "Aujourd'hui c'était vraiment difficile. J'ai l'impression que personne ne comprend ce que je traverse et ça m'épuise. Merci d'être là.",
+        likes: 14,
+        time: "Il y a 2h",
+        comments: [
+          { author: "Marc", text: "On est là pour toi. N'hésite pas à utiliser le chatbot pour vider ton sac en attendant." },
+          { author: "Khadija", text: "Je ressens la même chose parfois, tu n'es pas seul." }
+        ]
+      },
+      {
+        author: "Fatou",
+        isAnonymous: false,
+        text: "Je voulais juste dire que cette plateforme m'a vraiment aidée cette semaine. Le simple fait de savoir qu'on peut parler sans être jugée, ça change tout.",
+        likes: 28,
+        time: "Il y a 5h",
+        comments: [
+           { author: "Amadou", text: "Tellement vrai ! Un espace sain pour nous tous." }
+        ]
+      },
+      {
+        author: "A",
+        isAnonymous: true,
+        text: "Est-ce que quelqu'un a déjà ressenti une pression énorme de la famille tout en essayant de se trouver soi-même ? Je ne sais plus quoi faire.",
+        likes: 9,
+        time: "Hier",
+        comments: [
+           { author: "Yous", text: "C'est un combat quotidien. Courage." }
+        ]
+      }
+    ];
+
+    initialPosts.forEach(p => renderPost(p));
+  </script>
 </body>
 </html>

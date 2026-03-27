@@ -1,94 +1,324 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin - Anonyme</title>
-    <link rel="stylesheet" href="../css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Anonyme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --color-primary: #1A56A0;
+      --color-dark-bg: #0F1C2E;
+      --color-dark-surf: #142032;
+      --color-dark-border: #1E3048;
+      --color-dark-text: #E8EDF2;
+      --color-accent: #4A8FD4;
+    }
+    body {
+      background-color: var(--color-dark-bg);
+      color: var(--color-dark-text);
+      font-family: 'DM Sans', sans-serif;
+    }
+    .sidebar-item.active {
+      border-left: 3px solid var(--color-primary);
+      background-color: var(--color-dark-bg);
+      color: var(--color-accent);
+    }
+    .sidebar-item:not(.active) {
+      color: #7A92A8;
+    }
+    .stat-card {
+      background-color: var(--color-dark-surf);
+      border: 1px solid var(--color-dark-border);
+      border-radius: 12px;
+    }
+    .glass-dark {
+      background: rgba(20, 32, 50, 0.8);
+      backdrop-filter: blur(8px);
+    }
+  </style>
 </head>
-<body>
-    <nav>
-        <div class="logo">ANONYME ADMIN</div>
-        <div class="nav-links">
-            <a href="/index.html">Fil Public</a>
-            <a href="/admin/dashboard.html">Utilisateurs</a>
-            <a href="/admin/dashboard.html?view=posts">Contenus</a>
-            <a href="/admin/dashboard.html?view=badges">Badges</a>
-            <a href="/admin/dashboard.html?view=reports">Signalements</a>
-            <a href="/admin/dashboard.html?view=logs">Logs</a>
-            <button onclick="logout()" class="action-btn">Déconnexion</button>
-        </div>
+<body class="flex h-screen overflow-hidden">
+  <!-- Sidebar -->
+  <aside class="w-[200px] flex-shrink-0 bg-[#0A1520] border-r border-[#1E3048] flex flex-col pt-20">
+    <nav class="space-y-1">
+      <button class="sidebar-item w-full flex items-center gap-3 px-6 py-4 text-sm font-semibold active" onclick="showSection('overview', this)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg>
+        Vue générale
+      </button>
+      <button class="sidebar-item w-full flex items-center gap-3 px-6 py-4 text-sm font-semibold" onclick="showSection('members', this)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        Membres
+      </button>
+      <button class="sidebar-item w-full flex items-center gap-3 px-6 py-4 text-sm font-semibold relative" onclick="showSection('reports', this)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+        Signalements
+        <div class="absolute right-4 w-1.5 h-1.5 bg-[#D96C6C] rounded-full"></div>
+      </button>
+      <button class="sidebar-item w-full flex items-center gap-3 px-6 py-4 text-sm font-semibold" onclick="showSection('pro', this)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        Comptes pro
+      </button>
     </nav>
+  </aside>
 
-    <div class="container animate-in">
-        <div class="container" style="max-width: 1000px; padding: 20px;">
-        <div class="stats-bar" style="display: flex; gap: 20px; margin-bottom: 30px;">
-            <div class="glass-card" style="padding: 15px; flex: 1; text-align: center;">
-                <h4 style="color: var(--primary);">Utilisateurs</h4>
-                <div id="statUsers" style="font-size: 1.5rem; font-weight: 700;">--</div>
-            </div>
-            <div class="glass-card" style="padding: 15px; flex: 1; text-align: center;">
-                <h4 style="color: var(--primary);">Posts</h4>
-                <div id="statPosts" style="font-size: 1.5rem; font-weight: 700;">--</div>
-            </div>
-            <div class="glass-card" style="padding: 15px; flex: 1; text-align: center;">
-                <h4 style="color: #ef4444;">Signalements</h4>
-                <div id="statReports" style="font-size: 1.5rem; font-weight: 700;">--</div>
-            </div>
-            <div class="glass-card" style="padding: 15px; flex: 1; text-align: center;">
-                <h4 style="color: #f59e0b;">PROs</h4>
-                <div id="statPros" style="font-size: 1.5rem; font-weight: 700;">--</div>
-            </div>
+  <!-- Main Content Area -->
+  <main class="flex-1 flex flex-col h-full bg-[#0F1C2E]">
+    <!-- Navbar -->
+    <header class="h-[64px] bg-[#0A1520] border-b border-[#1E3048] flex items-center justify-between px-8 z-10">
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-serif text-[#4A8FD4]">Anonyme</h1>
+        <span class="bg-[#1A56A0] text-[10px] font-bold px-2 py-0.5 rounded tracking-widest text-white mt-1">ADMIN</span>
+      </div>
+      <div class="text-sm font-medium text-[#7A92A8]">
+        Bienvenue, <span class="text-white">Admin_Root</span>
+      </div>
+    </header>
+
+    <!-- Content Sections -->
+    <div class="flex-1 overflow-y-auto p-8" id="section-container">
+      
+      <!-- Overview Section -->
+      <div id="section-overview" class="space-y-8 animate-fade-up">
+        <div class="grid grid-cols-4 gap-6">
+          <div class="stat-card p-6">
+            <h3 class="text-xs text-[#7A92A8] font-bold uppercase tracking-wider mb-2">Membres total</h3>
+            <p class="text-3xl font-serif mb-2">68</p>
+            <span class="text-[11px] text-[#3BAA74] font-bold">+12 cette semaine</span>
+          </div>
+          <div class="stat-card p-6">
+            <h3 class="text-xs text-[#7A92A8] font-bold uppercase tracking-wider mb-2">Publications</h3>
+            <p class="text-3xl font-serif mb-2">214</p>
+            <span class="text-[11px] text-[#E8A838] font-bold">58% anonymes</span>
+          </div>
+          <div class="stat-card p-6">
+            <h3 class="text-xs text-[#7A92A8] font-bold uppercase tracking-wider mb-2">Signalements</h3>
+            <p class="text-3xl font-serif mb-2">3</p>
+            <span class="text-[11px] text-[#D96C6C] font-bold">En attente</span>
+          </div>
+          <div class="stat-card p-6">
+            <h3 class="text-xs text-[#7A92A8] font-bold uppercase tracking-wider mb-2">Sessions chatbot</h3>
+            <p class="text-3xl font-serif mb-2">41</p>
+            <span class="text-[11px] text-[#7A92A8] font-bold">vs 173 fil</span>
+          </div>
         </div>
 
-        <h2 id="viewTitle" style="margin-bottom: 20px;">Gestion des Utilisateurs</h2>
-            <div id="contentTable" style="margin-top: 20px; overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="text-align: left; border-bottom: 2px solid var(--border);">
-                            <th style="padding: 10px;">Pseudo</th>
-                            <th style="padding: 10px;">Rôle</th>
-                            <th style="padding: 10px;">Statut</th>
-                            <th style="padding: 10px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminDataTable">
-                        <!-- Loaded dynamically -->
-                    </tbody>
-                </table>
-            </div>
+        <div>
+          <div class="flex justify-between items-center mb-6">
+             <h2 class="text-xl font-bold">Activité de la plateforme</h2>
+             <div class="flex bg-[#142032] p-1 rounded-lg border border-[#1E3048]">
+                <button class="px-4 py-1.5 text-xs font-semibold rounded-md bg-[#1A56A0] text-white">7 derniers jours</button>
+                <button class="px-4 py-1.5 text-xs font-semibold rounded-md text-[#7A92A8]">30 jours</button>
+                <button class="px-4 py-1.5 text-xs font-semibold rounded-md text-[#7A92A8]">Tout</button>
+             </div>
+          </div>
+          <div class="stat-card overflow-hidden">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-[#1A2D42]/30 border-b border-[#1E3048]">
+                  <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Jour</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Connexions</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Publications</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Anonymes %</th>
+                  <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Réactions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#1E3048]">
+                <tr class="hover:bg-[#1A2D42]/30 transition-all">
+                  <td class="px-6 py-4 text-sm font-medium">Samedi 30 Mars</td>
+                  <td class="px-6 py-4 text-sm">48</td>
+                  <td class="px-6 py-4 text-sm">31</td>
+                  <td class="px-6 py-4 text-sm">64%</td>
+                  <td class="px-6 py-4 text-sm">124</td>
+                </tr>
+                <tr class="hover:bg-[#1A2D42]/30 transition-all">
+                  <td class="px-6 py-4 text-sm font-medium">Vendredi 29 Mars</td>
+                  <td class="px-6 py-4 text-sm">52</td>
+                  <td class="px-6 py-4 text-sm">28</td>
+                  <td class="px-6 py-4 text-sm">52%</td>
+                  <td class="px-6 py-4 text-sm">108</td>
+                </tr>
+                <tr class="hover:bg-[#1A2D42]/30 transition-all">
+                  <td class="px-6 py-4 text-sm font-medium">Jeudi 28 Mars</td>
+                  <td class="px-6 py-4 text-sm">41</td>
+                  <td class="px-6 py-4 text-sm">19</td>
+                  <td class="px-6 py-4 text-sm">44%</td>
+                  <td class="px-6 py-4 text-sm">82</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
+
+      <!-- Members Section (Hidden) -->
+      <div id="section-members" class="hidden space-y-8 animate-fade-up">
+         <h2 class="text-2xl font-bold">Gestion des membres</h2>
+         <div class="stat-card overflow-hidden">
+            <table class="w-full text-left">
+               <thead>
+                 <tr class="bg-[#1A2D42]/30 border-b border-[#1E3048]">
+                   <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Membre</th>
+                   <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Contact</th>
+                   <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Rôle</th>
+                   <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Statut</th>
+                   <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Inscrit</th>
+                   <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Actions</th>
+                 </tr>
+               </thead>
+               <tbody class="divide-y divide-[#1E3048]">
+                 <tr>
+                   <td class="px-6 py-4">
+                      <div class="flex items-center gap-3">
+                         <div class="w-8 h-8 rounded-full bg-[#1A56A0] text-white flex items-center justify-center font-bold text-xs">M</div>
+                         <div>
+                            <div class="text-sm font-bold">Moussa Sow</div>
+                            <div class="text-[10px] text-[#7A92A8]">@moussa_king</div>
+                         </div>
+                      </div>
+                   </td>
+                   <td class="px-6 py-4 text-xs">moussa@exemple.sn</td>
+                   <td class="px-6 py-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#1A2D55] text-[#4A8FD4]">PRO</span></td>
+                   <td class="px-6 py-4"><span class="text-[10px] bg-[#0D3326] text-[#3BAA74] font-bold px-2.5 py-1 rounded-full border border-[#3BAA74]/30">Actif</span></td>
+                   <td class="px-6 py-4 text-xs text-[#7A92A8]">12 Mars 2024</td>
+                   <td class="px-6 py-4">
+                      <div class="flex gap-2">
+                         <button class="bg-[#3A1F0D] text-[#E8A838] p-1.5 rounded hover:opacity-80 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg></button>
+                         <button class="bg-[#2D1212] text-[#D96C6C] p-1.5 rounded hover:opacity-80 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>
+                      </div>
+                   </td>
+                 </tr>
+                 <tr>
+                    <td class="px-6 py-4">
+                       <div class="flex items-center gap-3">
+                          <div class="w-8 h-8 rounded-full bg-[#7A92A8]/20 text-[#7A92A8] flex items-center justify-center font-bold text-xs">K</div>
+                          <div>
+                             <div class="text-sm font-bold">Khadija Kane</div>
+                             <div class="text-[10px] text-[#7A92A8]">@khadija_k</div>
+                          </div>
+                       </div>
+                    </td>
+                    <td class="px-6 py-4 text-xs">+221 77 123 ..</td>
+                    <td class="px-6 py-4 text-[10px] font-bold text-[#7A92A8]">Membre</td>
+                    <td class="px-6 py-4"><span class="text-[10px] bg-[#3A1F0D] text-[#E8A838] font-bold px-2.5 py-1 rounded-full border border-[#E8A838]/30">Suspendu</span></td>
+                    <td class="px-6 py-4 text-xs text-[#7A92A8]">15 Mars 2024</td>
+                    <td class="px-6 py-4">
+                       <div class="flex gap-2">
+                          <button class="bg-[#0D3326] text-[#3BAA74] px-2 py-1 rounded text-[10px] font-bold hover:opacity-80 transition-all">Réactiver</button>
+                          <button class="bg-[#2D1212] text-[#D96C6C] p-1.5 rounded hover:opacity-80 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg></button>
+                       </div>
+                    </td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+      </div>
+
+      <!-- Signals Section (Hidden) -->
+      <div id="section-reports" class="hidden space-y-6 animate-fade-up">
+         <h2 class="text-2xl font-bold">Signalements actifs</h2>
+         
+         <!-- Report 1 - Auto Crisis Alert -->
+         <div class="stat-card border-l-4 border-l-[#D96C6C] p-6 space-y-4">
+            <div class="flex justify-between items-start">
+               <div>
+                  <span class="text-[10px] font-bold text-[#D96C6C] uppercase tracking-wider bg-[#2D1212] px-2 py-0.5 rounded">Alerte crise automatique</span>
+                  <p class="text-[11px] text-[#7A92A8] mt-1">Émis par le Chatbot • Il y a 5 min</p>
+               </div>
+               <button class="text-[11px] text-[#4A8FD4] font-bold hover:underline" onclick="this.innerHTML='Abdoulaye Wade <span class=\'text-[10px] text-[#7A92A8] font-normal italic\'>(levée d\'anonymat enregistrée)</span>'">Voir l'identité ▸</button>
+            </div>
+            <div class="bg-[#142032] border-l-2 border-[#D96C6C] p-4 text-sm italic text-[#E8EDF2]/90">
+               "J'ai juste envie de tout arrêter. Personne ne m'écouterait de toute façon. Ça n'en finit plus."
+            </div>
+            <div class="flex gap-2 pt-2">
+               <button class="bg-[#2D1212] text-[#D96C6C] px-4 py-2 rounded text-xs font-extrabold uppercase tracking-tight">Supprimer</button>
+               <button class="bg-[#3A1F0D] text-[#E8A838] px-4 py-2 rounded text-xs font-extrabold uppercase tracking-tight">Avertir</button>
+               <button class="bg-[#1E3048] text-[#7A92A8] px-4 py-2 rounded text-xs font-extrabold uppercase tracking-tight ml-auto">Classer sans suite</button>
+            </div>
+         </div>
+
+         <!-- Report 2 - Community -->
+         <div class="stat-card p-6 space-y-4">
+            <div class="flex justify-between items-start">
+               <div>
+                  <span class="text-[10px] font-bold text-[#E8A838] uppercase tracking-wider bg-[#3A1F0D] px-2 py-0.5 rounded">Propos haineux</span>
+                  <p class="text-[11px] text-[#7A92A8] mt-1">Signalé par la communauté • Il y a 2h</p>
+               </div>
+               <button class="text-[11px] text-[#4A8FD4] font-bold hover:underline" onclick="this.innerHTML='Ibrahima Fall <span class=\'text-[10px] text-[#7A92A8] font-normal italic\'>(levée d\'anonymat enregistrée)</span>'">Voir l'identité ▸</button>
+            </div>
+            <div class="bg-[#142032] border-l-2 border-[#E8A838] p-4 text-sm italic text-[#E8EDF2]/90">
+               "Pourquoi tu pleures ? On dirait un gamin, grandis un peu. C'est ça notre jeunesse..."
+            </div>
+            <div class="flex gap-2 pt-2">
+               <button class="bg-[#2D1212] text-[#D96C6C] px-4 py-2 rounded text-xs font-extrabold uppercase tracking-tight">Supprimer</button>
+               <button class="bg-[#3A1F0D] text-[#E8A838] px-4 py-2 rounded text-xs font-extrabold uppercase tracking-tight">Avertir</button>
+               <button class="bg-[#1E3048] text-[#7A92A8] px-4 py-2 rounded text-xs font-extrabold uppercase tracking-tight ml-auto">Classer sans suite</button>
+            </div>
+         </div>
+      </div>
+
+      <!-- Pro Accounts Section (Hidden) -->
+      <div id="section-pro" class="hidden space-y-8 animate-fade-up">
+         <h2 class="text-2xl font-bold">Professionnels de santé</h2>
+         <div class="stat-card overflow-hidden">
+            <table class="w-full text-left">
+               <thead>
+                 <tr class="bg-[#1A2D42]/30 border-b border-[#1E3048]">
+                   <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Professionnel</th>
+                   <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Spécialité</th>
+                   <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Statut</th>
+                   <th class="px-6 py-4 text-xs font-bold uppercase text-[#7A92A8]">Actions</th>
+                 </tr>
+               </thead>
+               <tbody class="divide-y divide-[#1E3048]">
+                  <tr>
+                     <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                           <div class="w-8 h-8 rounded-full bg-[#1A56A0] text-white flex items-center justify-center font-bold text-xs">S</div>
+                           <div>
+                              <div class="text-sm font-bold">Dr. Salimata Diouf</div>
+                              <div class="text-[10px] text-[#7A92A8]">@dr_salimata</div>
+                           </div>
+                        </div>
+                     </td>
+                     <td class="px-6 py-4 text-xs">Psychologie clinique</td>
+                     <td class="px-6 py-4"><span class="text-[10px] bg-[#0D3326] text-[#3BAA74] font-bold px-2.5 py-1 rounded-full border border-[#3BAA74]/30">Actif</span></td>
+                     <td class="px-6 py-4"><button class="text-[11px] text-[#D96C6C] font-bold">Retirer</button></td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+
+         <div class="stat-card p-8 max-w-[500px]">
+            <h3 class="font-bold mb-4">Promouvoir un membre en PRO</h3>
+            <div class="flex gap-4">
+               <input type="text" placeholder="Entrez le pseudonyme" class="flex-1 bg-[#142032] border border-[#1E3048] rounded-[8px] px-4 py-2.5 text-sm outline-none focus:border-[#1A56A0]">
+               <button class="bg-[#1A56A0] text-white px-6 py-2.5 rounded-[8px] font-bold text-sm tracking-tight" onclick="alert('Demande de promotion confirmée')">Promouvoir</button>
+            </div>
+         </div>
+      </div>
+
     </div>
+  </main>
 
-    <script src="../js/auth.js"></script>
-    <script src="../js/admin.js"></script>
-    <script>
-        checkAuth();
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || user.role !== 'ADMIN') {
-            window.location.href = '/login.html';
-        }
+  <script>
+    function showSection(sectionId, btn) {
+      // Hide all sections
+      document.getElementById('section-overview').classList.add('hidden');
+      document.getElementById('section-members').classList.add('hidden');
+      document.getElementById('section-reports').classList.add('hidden');
+      document.getElementById('section-pro').classList.add('hidden');
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const view = urlParams.get('view') || 'users';
-        loadStats();
+      // Un-active all sidebar items
+      const items = document.querySelectorAll('.sidebar-item');
+      items.forEach(i => i.classList.remove('active'));
 
-        if (view === 'users') {
-            document.getElementById('viewTitle').innerText = 'Gestion des Utilisateurs';
-            loadUsers();
-        } else if (view === 'posts') {
-            document.getElementById('viewTitle').innerText = 'Gestion des Contenus (Posts)';
-            loadAllPosts();
-        } else if (view === 'badges') {
-             document.getElementById('viewTitle').innerText = 'Demandes de Badge PRO';
-             loadVerifications();
-        } else if (view === 'reports') {
-             document.getElementById('viewTitle').innerText = 'Signalements';
-             loadReports();
-        } else if (view === 'logs') {
-             document.getElementById('viewTitle').innerText = 'Logs Admin';
-             loadLogs();
-        }
-    </script>
+      // Show target section
+      document.getElementById('section-' + sectionId).classList.remove('hidden');
+      btn.classList.add('active');
+    }
+  </script>
 </body>
 </html>
