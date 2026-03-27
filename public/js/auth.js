@@ -16,8 +16,12 @@ const logout = () => {
 
 const checkAuth = () => {
     const token = localStorage.getItem('anonyme_token');
-    if (!token && !window.location.pathname.includes('login.html') && !window.location.pathname.includes('register.html') && !window.location.pathname.includes('verify-email.html')) {
+    const isAuthPage = window.location.pathname.includes('login.html') || window.location.pathname.includes('register.html') || window.location.pathname.includes('verify-email.html');
+    
+    if (!token && !isAuthPage) {
         window.location.href = '/login.html';
+    } else if (token && isAuthPage) {
+        window.location.href = '/index.html';
     }
 };
 
@@ -30,15 +34,23 @@ const login = async (loginIdentifier, password) => {
             body: JSON.stringify({ login: loginIdentifier, password })
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
+        if (!response.ok) throw new Error(data.error || 'Identifiants incorrects.');
 
         localStorage.setItem('anonyme_token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         
-        showToast('Connexion réussie !', 'SUCCESS');
-        setTimeout(() => window.location.href = '/index.html', 1000);
+        window.location.href = '/index.html';
         
-    } catch (e) { alert(e.message); }
+    } catch (e) { 
+        const errorEl = document.getElementById('login-error');
+        if (errorEl) {
+            errorEl.innerText = e.message;
+            errorEl.classList.remove('hidden');
+        } else {
+            alert(e.message);
+        }
+        throw e;
+    }
 };
 
 const register = async (userData) => {
@@ -51,9 +63,11 @@ const register = async (userData) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
 
-        alert(data.message || 'Compte créé !');
-        window.location.href = '/login.html';
-    } catch (e) { alert(e.message); }
+        return data; // success
+    } catch (e) { 
+        alert(e.message); 
+        throw e;
+    }
 };
 
 // --- REAL-TIME NOTIFICATIONS LOGIC ---
@@ -84,7 +98,7 @@ const showToast = (text, type = 'INFO') => {
     }
 
     const toast = document.createElement('div');
-    toast.className = 'toast';
+    toast.className = `toast animate-fade-up ${type.toLowerCase()}`;
     const icon = type === 'MESSAGE' ? '✉️' : (type === 'LIKE' ? '❤️' : '🔔');
     toast.innerHTML = `<span>${icon}</span> <span>${text}</span>`;
     
@@ -97,4 +111,7 @@ const showToast = (text, type = 'INFO') => {
 };
 
 // Auto-init for every page
-window.addEventListener('DOMContentLoaded', initGlobalNotifications);
+window.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    initGlobalNotifications();
+});

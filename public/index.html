@@ -23,7 +23,7 @@
            <svg class="animate-heart-cycle" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
            <span class="hidden md:inline">Don</span>
         </button>
-        <div class="w-9 h-9 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold border border-[--color-primary] cursor-pointer hover:shadow-md transition-all">S</div>
+        <div class="w-9 h-9 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold border border-[--color-primary] cursor-pointer hover:shadow-md transition-all nav-avatar">S</div>
       </div>
     </div>
   </nav>
@@ -31,9 +31,9 @@
   <!-- Content -->
   <main class="pt-24 pb-20 px-4 md:px-0 max-w-[680px] mx-auto min-h-screen">
     <!-- Composer -->
-    <div class="glass-card p-4 transition-all hover:border-[--color-primary-light] mb-8">
+    <div class="glass-card p-4 transition-all hover:border-[--color-primary-light] mb-8 bg-white border border-[#E2EAF2] rounded-[14px]">
       <div class="flex gap-4">
-        <div class="w-9 h-9 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold shrink-0">S</div>
+        <div class="w-9 h-9 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold shrink-0 composer-avatar">S</div>
         <div class="flex-1">
           <textarea id="composer-textarea" rows="1" placeholder="Exprimez-vous librement…" class="w-full bg-transparent border-none resize-none focus:ring-0 text-sm md:text-base text-[--color-text-body] outline-none min-h-[40px] pt-1" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
           <div id="anon-badge" class="hidden inline-flex items-center mt-3 bg-[--color-primary-pale] text-[--color-primary] text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full border border-[--color-primary]/20">ANONYME</div>
@@ -59,219 +59,78 @@
     </div>
 
     <!-- Feed List -->
-    <div id="feed-list" class="space-y-6">
-      <!-- Posts will be prepended here in JS -->
+    <div id="feed-container" class="space-y-6">
+      <!-- Posts injected by JS -->
     </div>
   </main>
 
-  <!-- Post Template -->
-  <template id="post-template">
-    <div class="glass-card p-4 animate-fade-up">
-      <div class="flex justify-between items-start mb-4">
-        <div class="flex items-center gap-3">
-          <div class="post-avatar w-8.5 h-8.5 rounded-full flex items-center justify-center font-bold text-sm shrink-0"></div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="post-author text-sm font-bold text-[--color-text-primary]"></span>
-              <span class="anon-chip hidden bg-[--color-primary-pale] text-[--color-primary] text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-full border border-[--color-primary]/20">ANONYME</span>
-            </div>
-            <p class="text-[11px] text-[--color-text-muted] font-medium post-time"></p>
-          </div>
-        </div>
-        <button class="text-[--color-text-muted] hover:text-[--color-danger] text-[11px] transition-all font-semibold uppercase tracking-wider">Signaler</button>
-      </div>
-      
-      <p class="text-sm md:text-[14px] text-[--color-text-body] leading-[1.7] mb-6 post-content"></p>
-
-      <div class="pt-4 border-t border-[#F7FAFD] flex items-center gap-6">
-        <button class="action-btn flex items-center gap-2 group transition-all" data-action="like">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center group-hover:bg-[--color-heart-pale] text-[#E8879A] transition-all">
-             <svg class="heart-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-          </div>
-          <span class="text-xs font-bold text-[--color-text-muted] group-hover:text-[#E8879A] post-likes-count"></span>
-        </button>
-        <button class="action-btn flex items-center gap-2 group transition-all" data-action="comment">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center group-hover:bg-[--color-primary-pale] text-[--color-text-muted] group-hover:text-[--color-primary] transition-all">
-             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-          </div>
-          <span class="text-xs font-bold text-[--color-text-muted] group-hover:text-[--color-primary] post-comments-count"></span>
-        </button>
-      </div>
-
-      <!-- Comments Section -->
-      <div class="comments-section hidden pt-4 mt-4 border-t border-[#F7FAFD]">
-        <div class="comments-list space-y-4 mb-5">
-           <!-- Comments injected here -->
-        </div>
-        <div class="flex gap-3">
-          <div class="w-7 h-7 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold text-[10px] shrink-0">S</div>
-          <div class="flex-1 relative">
-            <input type="text" placeholder="Ajouter un commentaire..." class="w-full bg-[--color-bg] border-none rounded-[20px] h-9 pl-4 pr-12 text-xs text-[--color-text-body] outline-none border focus:ring-1 focus:ring-[--color-primary]/20">
-            <button class="absolute right-2 top-1.5 text-[--color-primary] text-[11px] font-bold hover:underline">Envoyer</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/feed.js"></script>
 
   <script>
     const composer = document.getElementById('composer-textarea');
     const anonToggle = document.getElementById('composer-anon-toggle');
     const anonBadge = document.getElementById('anon-badge');
     const publishBtn = document.getElementById('btn-publish');
-    const feedList = document.getElementById('feed-list');
-    const template = document.getElementById('post-template');
+    const navAvatar = document.querySelector('.nav-avatar');
+    const composerAvatar = document.querySelector('.composer-avatar');
+
+    // Update UI with User Data
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user) {
+        const initial = user.pseudo[0].toUpperCase();
+        if (navAvatar) navAvatar.innerText = initial;
+        if (composerAvatar) composerAvatar.innerText = initial;
+    }
 
     // Composer interactions
     composer.oninput = () => {
       composer.style.height = '';
-      composer.style.height = composer.scrollHeight + 'px';
+      composer.style.height = (composer.scrollHeight) + 'px';
       
-      if (composer.value.trim() !== "") {
-        publishBtn.disabled = false;
-        publishBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-      } else {
-        publishBtn.disabled = true;
-        publishBtn.classList.add('opacity-50', 'cursor-not-allowed');
-      }
+      const hasContent = composer.value.trim() !== "";
+      publishBtn.disabled = !hasContent;
+      publishBtn.classList.toggle('opacity-50', !hasContent);
+      publishBtn.classList.toggle('cursor-not-allowed', !hasContent);
     };
 
     anonToggle.onchange = () => {
       anonBadge.classList.toggle('hidden', !anonToggle.checked);
     };
 
-    // Render Post Function
-    function renderPost(data, isNew = false) {
-      const clone = template.content.cloneNode(true);
-      const card = clone.querySelector('.glass-card');
-      const avatar = clone.querySelector('.post-avatar');
-      const author = clone.querySelector('.post-author');
-      const time = clone.querySelector('.post-time');
-      const content = clone.querySelector('.post-content');
-      const anonChip = clone.querySelector('.anon-chip');
-      const likesCount = clone.querySelector('.post-likes-count');
-      const commentsCount = clone.querySelector('.post-comments-count');
-      const commSection = clone.querySelector('.comments-section');
-      const commList = clone.querySelector('.comments-list');
-
-      content.innerText = data.text;
-      time.innerText = data.time || "À l'instant";
-      likesCount.innerText = data.likes;
-      commentsCount.innerText = data.comments.length;
-
-      if (data.isAnonymous) {
-        author.innerText = "Anonyme";
-        anonChip.classList.remove('hidden');
-        avatar.innerText = "A";
-        avatar.className = "post-avatar w-8.5 h-8.5 rounded-full flex items-center justify-center font-bold text-sm shrink-0 bg-[#F0F4F8] text-[#7A92A8]";
-      } else {
-        author.innerText = data.author;
-        avatar.innerText = data.author[0];
-        avatar.className = "post-avatar w-8.5 h-8.5 rounded-full flex items-center justify-center font-bold text-sm shrink-0 bg-[#EAF3FB] text-[#1A56A0]";
-      }
-
-      // Actions logic
-      const likeBtn = clone.querySelector('[data-action="like"]');
-      const commentBtn = clone.querySelector('[data-action="comment"]');
-      const heartIcon = clone.querySelector('.heart-icon');
-
-      likeBtn.onclick = () => {
-         const isActive = heartIcon.getAttribute('fill') === 'currentColor';
-         if (isActive) {
-           heartIcon.setAttribute('fill', 'none');
-           likesCount.innerText = parseInt(likesCount.innerText) - 1;
-           likeBtn.querySelector('.w-8').classList.remove('bg-[--color-heart-pale]');
-         } else {
-           heartIcon.setAttribute('fill', 'currentColor');
-           likesCount.innerText = parseInt(likesCount.innerText) + 1;
-           // Animation scale pulse
-           heartIcon.parentElement.style.transform = 'scale(1.3)';
-           setTimeout(() => heartIcon.parentElement.style.transform = '', 200);
-           likeBtn.querySelector('.w-8').classList.add('bg-[--color-heart-pale]');
-         }
-      };
-
-      commentBtn.onclick = () => {
-        commSection.classList.toggle('hidden');
-      };
-
-      // Injects existing comments
-      data.comments.forEach(c => {
-        const div = document.createElement('div');
-        div.className = "flex gap-3";
-        div.innerHTML = `
-          <div class="w-6.5 h-6.5 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold text-[9px] shrink-0">${c.author[0]}</div>
-          <div class="bg-[--color-bg] rounded-r-[10px] rounded-bl-[10px] p-2.5 max-w-[85%]">
-            <p class="text-[12px] text-[--color-text-body] leading-relaxed">${c.text}</p>
-          </div>
-        `;
-        commList.appendChild(div);
-      });
-
-      if (isNew) {
-        feedList.prepend(card);
-      } else {
-        feedList.appendChild(card);
-      }
-    }
-
-    // Publish Logic
-    publishBtn.onclick = () => {
-      const data = {
-        author: "S",
-        isAnonymous: anonToggle.checked,
-        text: composer.value,
-        likes: 0,
-        comments: [],
-        time: "À l'instant"
-      };
+    // Real Publish Logic
+    publishBtn.onclick = async () => {
+      const content = composer.value.trim();
+      const isAnonymous = anonToggle.checked;
       
-      renderPost(data, true);
-      
-      composer.value = "";
-      composer.style.height = '';
-      anonToggle.checked = false;
-      anonBadge.classList.add('hidden');
       publishBtn.disabled = true;
-      publishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      publishBtn.innerHTML = `<div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>`;
+
+      try {
+        await publishPost(content, isAnonymous);
+        
+        composer.value = "";
+        composer.style.height = '';
+        anonToggle.checked = false;
+        anonBadge.classList.add('hidden');
+        publishBtn.innerText = "Publier";
+        publishBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      } catch (e) {
+        publishBtn.disabled = false;
+        publishBtn.innerText = "Publier";
+        alert('Erreur lors de la publication : ' + e.message);
+      }
     };
 
-    // Pre-fill Feed
-    const initialPosts = [
-      {
-        author: "A",
-        isAnonymous: true,
-        text: "Aujourd'hui c'était vraiment difficile. J'ai l'impression que personne ne comprend ce que je traverse et ça m'épuise. Merci d'être là.",
-        likes: 14,
-        time: "Il y a 2h",
-        comments: [
-          { author: "Marc", text: "On est là pour toi. N'hésite pas à utiliser le chatbot pour vider ton sac en attendant." },
-          { author: "Khadija", text: "Je ressens la même chose parfois, tu n'es pas seul." }
-        ]
-      },
-      {
-        author: "Fatou",
-        isAnonymous: false,
-        text: "Je voulais juste dire que cette plateforme m'a vraiment aidée cette semaine. Le simple fait de savoir qu'on peut parler sans être jugée, ça change tout.",
-        likes: 28,
-        time: "Il y a 5h",
-        comments: [
-           { author: "Amadou", text: "Tellement vrai ! Un espace sain pour nous tous." }
-        ]
-      },
-      {
-        author: "A",
-        isAnonymous: true,
-        text: "Est-ce que quelqu'un a déjà ressenti une pression énorme de la famille tout en essayant de se trouver soi-même ? Je ne sais plus quoi faire.",
-        likes: 9,
-        time: "Hier",
-        comments: [
-           { author: "Yous", text: "C'est un combat quotidien. Courage." }
-        ]
-      }
-    ];
-
-    initialPosts.forEach(p => renderPost(p));
+    // Logout shortcut for the navbar avatar
+    if (navAvatar) {
+        navAvatar.title = "Déconnexion";
+        navAvatar.onclick = () => {
+            if (confirm('Voulez-vous vous déconnecter ?')) logout();
+        };
+    }
   </script>
 </body>
 </html>

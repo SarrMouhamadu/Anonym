@@ -1,218 +1,130 @@
-// Premium TikTok Feed Interface Logic
-let currentPage = 1;
-let loading = false;
-let noMorePosts = false;
+const feedContainer = document.getElementById('feed-container');
 
-const loadFeed = async (reset = false) => {
-    if (loading || (noMorePosts && !reset)) return;
-    loading = true;
-    
-    const feedContainer = document.getElementById('feedList');
-    if (reset) {
-        currentPage = 1;
-        noMorePosts = false;
-        feedContainer.innerHTML = ''; // Clear for reload
-        feedContainer.scrollTop = 0;
-    }
-
+const fetchPosts = async () => {
     try {
-        const response = await fetch(`/api/posts?page=${currentPage}&limit=5`, {
+        const response = await fetch(`${API_URL}/posts`, {
             headers: getAuthHeaders()
         });
         const posts = await response.json();
-        if (!response.ok) throw new Error(posts.error || 'Erreur flux');
-
-        if (posts.length === 0) {
-            if (reset) feedContainer.innerHTML = '<div class="post-card-snap" style="background:#000; color:var(--text-muted); justify-content:center; align-items:center;">Plus rien à voir ! 🧊</div>';
-            noMorePosts = true;
-            loading = false;
-            return;
-        }
-
-        posts.forEach(post => {
-            const card = document.createElement('div');
-            card.className = 'post-card-snap';
-            card.id = `post-${post.id}`;
-            
-            let mediaHtml = '';
-            if (post.mediaType === 'IMAGE' && post.mediaUrl) {
-                mediaHtml = `<div style="position:absolute; width:100%; height:100%; top:0; left:0; z-index:0; background:url('${post.mediaUrl}') center/cover no-repeat; opacity:0.7;"></div>`;
-            } else if (post.mediaType === 'VIDEO' && post.mediaUrl) {
-                mediaHtml = `<video src="${post.mediaUrl}" autoplay muted loop playsinline style="position:absolute; width:100%; height:100%; top:0; left:0; object-fit:cover; z-index:0; opacity:0.7;"></video>`;
-            } else {
-                // Minimalist abstract gradient if no media
-                mediaHtml = `<div style="position:absolute; width:100%; height:100%; top:0; left:0; z-index:0; background: radial-gradient(circle at top right, #1a1a2e, #000); opacity:0.5;"></div>`;
-            }
-
-            const pseudoLabel = post.isAnonymous ? 'Anonyme' : `@${post.user.pseudo}`;
-            const isPro = !post.isAnonymous && post.user.role === 'PRO';
-
-            card.innerHTML = `
-                ${mediaHtml}
-                <div style="position:relative; z-index:2; padding:40px; width:100%; text-align:left; font-size:1.4rem; font-weight:400; line-height:1.5; text-shadow: 2px 2px 10px rgba(0,0,0,0.9); margin-top: -20%;">
-                    ${post.content}
-                </div>
-                
-                <div class="post-overlay">
-                    <div class="profile-tag" onclick="${!post.isAnonymous ? `window.location.href='/profile.html?pseudo=${post.user.pseudo}'` : ''}" style="${!post.isAnonymous ? 'cursor:pointer' : ''}">
-                        <div style="width:32px; height:32px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem;">
-                            ${pseudoLabel[0].toUpperCase()}
-                        </div>
-                        <span style="font-weight:700; font-size:0.95rem;">${pseudoLabel}</span>
-                        ${isPro ? '<span class="pro-verif-badge">✓</span>' : ''}
-                    </div>
-                </div>
-
-                <div class="post-sidebar">
-                    <div class="sidebar-icon" onclick="reactToPost('${post.id}')">
-                        <span style="font-size:1.5rem">❤️</span>
-                        <span id="react-count-${post.id}" class="sidebar-label">${post._count.reactions}</span>
-                    </div>
-                    <div class="sidebar-icon" onclick="openComments('${post.id}')">
-                        <span style="font-size:1.5rem">💬</span>
-                        <span id="comment-count-${post.id}" class="sidebar-label">${post._count.comments}</span>
-                    </div>
-                    <div class="sidebar-icon" onclick="openMessaging('${post.userId}', '${post.user.pseudo}')">
-                        <span style="font-size:1.5rem">✉️</span>
-                    </div>
-                    <div class="sidebar-icon" onclick="reportPost('${post.id}')">
-                        <span style="font-size:1.2rem">🚩</span>
-                    </div>
-                    ${canDelete(post) ? `
-                        <div class="sidebar-icon" style="color:var(--danger)" onclick="deletePost('${post.id}')">
-                            <span style="font-size:1.5rem">🗑️</span>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-            feedContainer.appendChild(card);
-        });
-
-        currentPage++;
-        loading = false;
-    } catch (error) {
-        console.error(error);
-        loading = false;
+        if (!response.ok) throw new Error(posts.error);
+        
+        feedContainer.innerHTML = '';
+        posts.forEach(post => renderPost(post));
+    } catch (e) {
+        console.error('Fetch feed error:', e);
     }
 };
-
-const reactToPost = async (postId) => {
-    try {
-        let res = await fetch(`/api/posts/${postId}/react`, { method: 'POST', headers: getAuthHeaders() });
-        if (res.status === 409) {
-            res = await fetch(`/api/posts/${postId}/react`, { method: 'DELETE', headers: getAuthHeaders() });
-        }
-        const data = await res.json();
-        if (data.count !== undefined) {
-            const countEl = document.getElementById(`react-count-${postId}`);
-            countEl.innerText = data.count;
-            countEl.parentElement.classList.add('heart-pop');
-            setTimeout(() => countEl.parentElement.classList.remove('heart-pop'), 400);
-        }
-    } catch (e) { console.error(e); }
-};
-
-// Scroll listener for infinite scroll
-document.getElementById('feedList')?.addEventListener('scroll', (e) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.target;
-    if (scrollTop + clientHeight >= scrollHeight - 300) {
-        loadFeed();
-    }
-});
-
-const openComments = async (postId) => {
-    const modal = document.getElementById('commentsModal');
-    modal.style.display = 'flex';
-    window.currentPostIdForComment = postId;
-    const list = document.getElementById('commentsList');
-    list.innerHTML = '<div style="color:var(--text-muted); padding:20px; text-align:center;">Chargement...</div>';
-    try {
-        const res = await fetch(`/api/comments/post/${postId}`, { headers: getAuthHeaders() });
-        const comments = await res.json();
-        list.innerHTML = '';
-        if (comments.length === 0) {
-            list.innerHTML = '<div style="color:var(--text-muted); padding:20px; text-align:center;">Aucun commentaire. Soyez le premier !</div>';
-        }
-        comments.forEach(c => {
-            const div = document.createElement('div');
-            div.style.padding = '15px 0';
-            div.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-            div.innerHTML = `
-                <div style="font-weight:700; color:var(--primary); font-size:0.85rem;">@${c.user.pseudo}</div>
-                <div style="font-size:0.9rem; margin-top:3px;">${c.content}</div>
-            `;
-            list.appendChild(div);
-        });
-    } catch (e) { console.error(e); }
-};
-
-document.getElementById('submitCommentBtn')?.addEventListener('click', async () => {
-    const input = document.getElementById('commentInput');
-    const content = input.value.trim();
-    if (!content || !window.currentPostIdForComment) return;
-    try {
-        const res = await fetch('/api/comments', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ postId: window.currentPostIdForComment, content })
-        });
-        const data = await res.json();
-        if(!res.ok) throw new Error(data.error);
-        input.value = '';
-        const counter = document.getElementById(`comment-count-${window.currentPostIdForComment}`);
-        if(counter) counter.innerText = parseInt(counter.innerText) + 1;
-        openComments(window.currentPostIdForComment);
-    } catch (e) { alert(e.message); }
-});
 
 const publishPost = async (content, isAnonymous) => {
-    const mediaUrl = document.getElementById('postMediaUrl').value.trim();
-    const mediaType = document.getElementById('postMediaType').value;
-    if(!content.trim()) return alert('Contenu requis.');
-
     try {
-        const response = await fetch('/api/posts', {
+        const response = await fetch(`${API_URL}/posts`, {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ content, isAnonymous, mediaUrl, mediaType })
+            body: JSON.stringify({ content, isAnonymous })
         });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Erreur publication');
+        const newPost = await response.json();
+        if (!response.ok) throw new Error(newPost.error);
         
-        document.getElementById('postModal').style.display = 'none';
-        document.getElementById('postContent').value = '';
-        loadFeed(true); // Full refresh
-        showToast('Publication en ligne !', 'SUCCESS');
-    } catch (error) { alert(error.message); }
-};
-
-const deletePost = async (postId) => {
-    if (confirm('Supprimer définitivement ?')) {
-        await fetch(`/api/posts/${postId}`, { method: 'DELETE', headers: getAuthHeaders() });
-        loadFeed(true);
+        // Prepend to feed
+        const tempDiv = document.createElement('div');
+        tempDiv.className = 'animate-fade-up';
+        feedContainer.prepend(tempDiv);
+        renderPost(newPost, tempDiv);
+        
+        return newPost;
+    } catch (e) {
+        alert(e.message);
+        throw e;
     }
 };
 
-const reportPost = async (postId) => {
-    const reason = prompt('Pourquoi signalez-vous ce contenu ?');
-    if (!reason) return;
+const reactToPost = async (postId, heartIcon, counterEl) => {
+    const isLiked = heartIcon.classList.contains('active');
+    const method = isLiked ? 'DELETE' : 'POST';
+    
     try {
-        const res = await fetch('/api/reports', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ targetType: 'POST', postId, reason }) });
-        if(res.ok) showToast('Signalement envoyé aux administrateurs.', 'SUCCESS');
-    } catch (e) { alert(e.message); }
+        const response = await fetch(`${API_URL}/posts/${postId}/react`, {
+            method,
+            headers: getAuthHeaders()
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+
+        counterEl.innerText = data.count;
+        heartIcon.classList.toggle('active');
+        if (!isLiked) {
+             heartIcon.classList.add('animate-ping');
+             setTimeout(() => heartIcon.classList.remove('animate-ping'), 500);
+        }
+    } catch (e) {
+        alert(e.message);
+    }
 };
 
-const canDelete = (post) => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    return user && (user.id === post.userId || user.role === 'ADMIN' || user.role === 'PRO');
+const renderPost = (post, target = null) => {
+    const timeAgo = (date) => {
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        if (seconds < 60) return 'À l\'instant';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `Il y a ${minutes}m`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `Il y a ${hours}h`;
+        return new Date(date).toLocaleDateString();
+    };
+
+    const postHtml = `
+      <div class="glass-card p-4 md:p-6 mb-4 md:mb-6 animate-fade-up border border-[#E2EAF2] rounded-[14px] bg-white">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${post.isAnonymous ? 'bg-[#F0F4F8] text-[#7A92A8]' : 'bg-[--color-primary-pale] text-[--color-primary]'}">
+              ${post.isAnonymous ? 'A' : (post.user.pseudo[0].toUpperCase())}
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-[--color-text-primary]">${post.isAnonymous ? 'Anonyme' : post.user.pseudo}</span>
+                ${post.user.role === 'PRO' ? '<span class="bg-[#1A56A0] text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold">PRO</span>' : ''}
+              </div>
+              <span class="text-[11px] text-[--color-text-muted]">${timeAgo(post.createdAt)}</span>
+            </div>
+          </div>
+          ${post.isAnonymous ? '<span class="bg-[--color-primary-pale] text-[--color-primary] text-[10px] font-bold px-2.5 py-1 rounded-full tracking-tight">ANONYME</span>' : ''}
+        </div>
+        <p class="text-[--color-text-body] text-[14px] leading-relaxed mb-4">${post.content}</p>
+        <div class="flex items-center gap-6 pt-3 border-t border-[#F7FAFD]">
+          <button class="flex items-center gap-2 text-[#CBD5E1] hover:text-[--color-heart] transition-all group heart-btn" data-id="${post.id}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" class="heart-svg" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            <span class="text-[13px] font-bold reaction-count">${post._count.reactions || 0}</span>
+          </button>
+          <button class="flex items-center gap-2 text-[#CBD5E1] hover:text-[--color-primary] transition-all group">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            <span class="text-[13px] font-bold">${post._count.comments || 0}</span>
+          </button>
+          <button class="ml-auto text-[11px] font-bold text-[#CBD5E1] hover:text-[--color-danger] transition-all">SIGNALER</button>
+        </div>
+      </div>
+    `;
+
+    if (target) {
+        target.innerHTML = postHtml;
+    } else {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = postHtml;
+        feedContainer.appendChild(wrapper.firstElementChild);
+    }
 };
 
-const openMessaging = (id, name) => window.location.href = `/messages.html?to=${id}&name=${encodeURIComponent(name)}`;
+// Event Delegation for Reactions
+document.addEventListener('click', (e) => {
+    const heartBtn = e.target.closest('.heart-btn');
+    if (heartBtn) {
+        const postId = heartBtn.dataset.id;
+        const heartSvg = heartBtn.querySelector('.heart-svg');
+        const countEl = heartBtn.querySelector('.reaction-count');
+        reactToPost(postId, heartBtn, countEl);
+    }
+});
 
-// Global UI events
-document.getElementById('showPublishBtn')?.addEventListener('click', () => { 
-    document.getElementById('postModal').style.display = 'block'; 
-});
-document.getElementById('publishBtn')?.addEventListener('click', () => { 
-    publishPost(document.getElementById('postContent').value, document.getElementById('isAnonymous').checked); 
-});
+// Initial load
+if (feedContainer) {
+    fetchPosts();
+}

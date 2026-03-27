@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/auth.js"></script>
 </head>
 <body class="bg-[--color-bg] min-h-screen flex flex-col">
   <!-- Navbar -->
@@ -21,13 +22,22 @@
     <div class="flex-1 text-center">
       <h1 class="text-2xl text-[--color-text-primary]">IA</h1>
     </div>
-    <div class="flex-1 text-right">
-      <div class="inline-flex items-center gap-2 px-3 py-1 bg-[--color-success-pale] text-[--color-success] rounded-full text-[10px] font-bold tracking-widest uppercase">
+    <div class="flex-1 text-right flex items-center justify-end gap-3">
+      <div class="hidden md:inline-flex items-center gap-2 px-3 py-1 bg-[--color-success-pale] text-[--color-success] rounded-full text-[10px] font-bold tracking-widest uppercase">
         <div class="w-1.5 h-1.5 bg-[--color-success] rounded-full animate-pulse"></div>
-        Disponible 24h/24
+        Disponible
       </div>
+      <div class="w-8 h-8 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold text-xs nav-avatar">S</div>
     </div>
   </nav>
+
+  <script>
+    // Update Avatar
+    const user_info = JSON.parse(localStorage.getItem('user'));
+    if (user_info) {
+        document.querySelector('.nav-avatar').innerText = user_info.pseudo[0].toUpperCase();
+    }
+  </script>
 
   <!-- Disclaimer -->
   <div class="fixed top-16 left-0 right-0 py-2.5 px-6 bg-[--color-primary-pale] border-b border-[#D0E4F5] z-40 flex items-center gap-3">

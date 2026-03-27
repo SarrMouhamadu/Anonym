@@ -157,24 +157,32 @@
     };
 
     // Form Submission: Register
-    formRegister.onsubmit = (e) => {
+    formRegister.onsubmit = async (e) => {
       e.preventDefault();
-      const contactVal = regContact.value;
-      const contactType = regContact.type === 'email' ? 'email' : 'téléphone';
-      
-      document.getElementById('success-msg').innerText = `Un lien de vérification a été envoyé à ${contactVal}. Cliquez sur le lien pour activer votre compte.`;
-      
-      formRegister.classList.add('hidden');
-      regSuccess.classList.remove('hidden');
+      try {
+        const userData = {
+            fullName: document.getElementById('reg-name').value,
+            pseudo: document.getElementById('reg-pseudo').value,
+            email: document.getElementById('reg-contact').type === 'email' ? document.getElementById('reg-contact').value : null,
+            phone: document.getElementById('reg-contact').type === 'tel' ? document.getElementById('reg-contact').value : null,
+            password: document.getElementById('reg-pass').value
+        };
+        const data = await register(userData);
+        document.getElementById('success-msg').innerText = data.message || `Compte créé ! Un lien de vérification a été envoyé à ${regContact.value}.`;
+        formRegister.classList.add('hidden');
+        regSuccess.classList.remove('hidden');
+      } catch (e) {
+        // alert already handled in register()
+      }
     };
 
-    document.getElementById('goto-login').onclick = () => {
-      tabLogin.click();
-    };
+    document.getElementById('goto-login').onclick = () => { tabLogin.click(); };
 
     // Form Submission: Login
-    formLogin.onsubmit = (e) => {
+    formLogin.onsubmit = async (e) => {
       e.preventDefault();
+      const loginId = document.getElementById('login-id').value;
+      const loginPass = document.getElementById('login-pass').value;
       const btn = document.getElementById('login-btn');
       const text = document.getElementById('login-text');
       const loader = document.getElementById('login-loader');
@@ -185,16 +193,14 @@
       loader.classList.remove('hidden');
       error.classList.add('hidden');
 
-      setTimeout(() => {
+      try {
+        await login(loginId, loginPass);
+      } catch (e) {
         btn.disabled = false;
         text.classList.remove('hidden');
         loader.classList.add('hidden');
-        error.classList.remove('hidden');
-        // If login was real, use window.location.href = 'index.html';
-        if (document.getElementById('login-id').value === 'admin' && document.getElementById('login-pass').value === 'admin') {
-           window.location.href = 'index.html';
-        }
-      }, 1200);
+        // err reported by login() directly to its DOM element
+      }
     };
   </script>
 </body>
