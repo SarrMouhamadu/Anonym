@@ -1,64 +1,185 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messages - Anonyme</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="/socket.io/socket.io.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages — Anonyme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-    <nav>
-        <div class="logo">ANONYME</div>
-        <div class="nav-links">
-            <a href="/index.html">Fil</a>
-            <a href="/profile.html">Mon Profil</a>
-            <a href="/messages.html">Messages</a>
-            <a href="/chatbot.html">Chat IA</a>
-            <button onclick="logout()" class="action-btn">Déconnexion</button>
-        </div>
-    </nav>
-
-    <div class="container animate-in">
-        <div class="glass-card chat-container" style="margin-top: 20px;">
-            <div id="chatPartnerHeader" style="padding: 15px; border-bottom: 1px solid var(--border); font-weight: 700;">
-                Choisissez un destinataire dans le fil (Profil PRO)
-            </div>
-
-            <div id="chatHistory" class="messages-list" style="flex: 1; min-height: 400px; display: flex; flex-direction: column;">
-                <p style="text-align: center; color: var(--text-muted); margin-top: 100px;">Sélectionnez une conversation</p>
-            </div>
-
-            <div id="messageInputArea" style="padding: 20px; border-top: 1px solid var(--border); display: none;">
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="chatInput" placeholder="Écrire un message..." style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--glass); color: white;">
-                    <button id="sendMsgBtn" class="btn btn-primary" style="width: auto; padding: 0 30px;">Envoyer</button>
-                </div>
-            </div>
-        </div>
+<body class="bg-[--color-bg] min-h-screen flex flex-col overflow-hidden">
+  
+  <!-- Navbar -->
+  <nav class="bg-white border-b border-[#E2EAF2] h-16 flex-shrink-0 flex items-center px-4 md:px-6 z-50">
+    <div class="max-w-[1200px] w-full mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="text-[--color-text-muted] hover:text-[--color-text-primary]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </a>
+        <h1 class="text-xl font-bold text-[--color-text-primary]">Messages</h1>
+      </div>
+      <div class="w-9 h-9 bg-[--color-primary-pale] text-[--color-primary] rounded-full flex items-center justify-center font-bold nav-avatar">S</div>
     </div>
+  </nav>
 
-    <script src="js/auth.js"></script>
-    <script src="js/messages.js"></script>
-    <script>
-        checkAuth();
-        initChat();
+  <!-- Main Multi-column Layout -->
+  <main class="flex-1 flex overflow-hidden">
+    
+    <!-- Sidebar: Conversation List -->
+    <aside id="conv-list" class="w-full md:w-[350px] bg-white border-r border-[#E2EAF2] flex flex-col h-full z-40">
+      <div class="p-4 border-b border-[#F0F4F8]">
+        <div class="relative">
+          <input type="text" placeholder="Rechercher une discussion..." class="w-full bg-[--color-bg] border-none rounded-[10px] h-10 pl-10 pr-4 text-sm text-[--color-text-body] outline-none">
+          <svg class="absolute left-3 top-2.5 text-[--color-text-muted]" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto" id="conversations-container">
+        <!-- Conversation items loop here -->
+        <div class="p-4 flex items-center gap-4 hover:bg-[--color-bg] cursor-pointer transition-all border-b border-[#F7FAFD]" onclick="openChat('123', 'A', 'Anonyme')">
+           <div class="w-12 h-12 rounded-full bg-[#F0F4F8] text-[#7A92A8] flex items-center justify-center font-bold text-lg">A</div>
+           <div class="flex-1 overflow-hidden">
+              <div class="flex justify-between items-center mb-0.5">
+                 <span class="font-bold text-[--color-text-primary]">Anonyme</span>
+                 <span class="text-[10px] text-[--color-text-muted]">14:22</span>
+              </div>
+              <p class="text-xs text-[--color-text-muted] truncate">Merci encore pour vos mots...</p>
+           </div>
+        </div>
+      </div>
+    </aside>
 
-        // Check if we passed a target userId in URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const partnerId = urlParams.get('to');
-        const partnerName = urlParams.get('name');
+    <!-- Chat Window -->
+    <section id="chat-window" class="flex-1 bg-white hidden md:flex flex-col h-full relative">
+      <!-- Chat Header -->
+      <header class="h-16 border-b border-[#E2EAF2] flex items-center px-4 justify-between bg-white/80 backdrop-blur-md">
+        <div class="flex items-center gap-3">
+          <button class="md:hidden" onclick="closeChat()">
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <div id="chat-avatar" class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white bg-[--color-primary]">?</div>
+          <div>
+            <h3 id="chat-title" class="text-sm font-bold text-[--color-text-primary]">Sélectionnez un membre</h3>
+            <span class="text-[10px] text-[--color-success] font-bold uppercase tracking-wider">En ligne</span>
+          </div>
+        </div>
+      </header>
 
-        if (partnerId) {
-            document.getElementById('chatPartnerHeader').innerText = `Discussion avec ${partnerName || 'Badge Vérifié'}`;
-            document.getElementById('messageInputArea').style.display = 'block';
-            loadConversations(partnerId);
-            
-            document.getElementById('sendMsgBtn').addEventListener('click', () => {
-                const content = document.getElementById('chatInput').value;
-                sendMessageToPartner(partnerId, content);
-            });
-        }
-    </script>
+      <!-- Messages Area -->
+      <div id="messages-area" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-[--color-bg]/50 scroll-smooth">
+         <div class="text-center py-20 text-[--color-text-muted] opacity-50">
+            <svg class="mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <p class="text-sm">Vos discussions sont sécurisées et privées.</p>
+         </div>
+      </div>
+
+      <!-- Saisie Zone -->
+      <footer class="p-4 border-t border-[#E2EAF2] bg-white">
+        <div class="flex gap-3 items-end max-w-[800px] mx-auto">
+          <textarea id="chat-input" rows="1" placeholder="Écrivez votre message..." class="flex-1 bg-[--color-bg] border-none rounded-[12px] p-3 text-sm text-[--color-text-body] outline-none resize-none max-h-[120px] pt-2.5" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+          <button id="send-btn" class="w-11 h-11 bg-[--color-primary] text-white flex items-center justify-center rounded-[12px] hover:opacity-90 transition-all shrink-0">
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </div>
+      </footer>
+    </section>
+
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const convSidebar = document.getElementById('conv-list');
+    const chatWindow = document.getElementById('chat-window');
+    const messagesArea = document.getElementById('messages-area');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+    
+    let currentReceiverId = null;
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+
+    // Update Nav Avatar
+    if (currentUser) {
+        document.querySelector('.nav-avatar').innerText = currentUser.pseudo[0].toUpperCase();
+    }
+
+    function openChat(id, initial, name) {
+      currentReceiverId = id;
+      document.getElementById('chat-title').innerText = name;
+      document.getElementById('chat-avatar').innerText = initial;
+      
+      // Responsive: hide sidebar on mobile
+      if (window.innerWidth < 768) {
+        convSidebar.classList.add('hidden');
+      }
+      chatWindow.classList.remove('hidden');
+      chatWindow.classList.add('flex');
+      
+      // Clear welcome msg
+      messagesArea.innerHTML = '';
+      
+      // Load history simulation...
+      appendMessage("Bonjour, comment allez-vous ?", false);
+    }
+
+    function closeChat() {
+      chatWindow.classList.add('hidden');
+      convSidebar.classList.remove('hidden');
+      currentReceiverId = null;
+    }
+
+    function appendMessage(text, isMine) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `flex ${isMine ? 'justify-end' : 'justify-start'} animate-fade-up`;
+      msgDiv.innerHTML = `
+        <div class="max-w-[75%] p-3.5 rounded-[14px] text-sm leading-relaxed ${isMine ? 'bg-[--color-primary] text-white rounded-tr-none' : 'bg-white border border-[#E2EAF2] text-[--color-text-body] rounded-tl-none shadow-sm'}">
+          ${text}
+          <div class="text-[9px] mt-1 opacity-60 text-right">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+        </div>
+      `;
+      messagesArea.appendChild(msgDiv);
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    // Socket message handling
+    if (typeof globalSocket !== 'undefined') {
+        globalSocket.on('message', (data) => {
+            if (data.senderId === currentReceiverId) {
+                appendMessage(data.content, false);
+            } else {
+                // Background message -> Toast notify handled in auth.js
+            }
+        });
+    }
+
+    function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text || !currentReceiverId) return;
+
+      const messageData = {
+          senderId: currentUser.id,
+          receiverId: currentReceiverId,
+          content: text
+      };
+
+      // Emit through globalSocket (initialized in auth.js)
+      if (globalSocket) {
+          globalSocket.emit('message', messageData);
+      }
+
+      appendMessage(text, true);
+      chatInput.value = '';
+      chatInput.style.height = '';
+    }
+
+    sendBtn.onclick = sendMessage;
+    chatInput.onkeydown = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+      }
+    };
+  </script>
 </body>
 </html>
