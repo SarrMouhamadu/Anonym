@@ -19,13 +19,13 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       "default-src": ["'self'"],
-      "script-src": ["'self'", "'unsafe-inline'", "https://cdn.socket.io", "https://cdn.tailwindcss.com", "https://unpkg.com"],
+      "script-src": ["'self'", "'unsafe-inline'", "https://cdn.socket.io", "https://cdn.tailwindcss.com", "https://unpkg.com", "https://lottie.host"],
       "script-src-attr": ["'self'", "'unsafe-inline'"],
       "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
-      "img-src": ["'self'", "data:", "*"], // allow all media URLs locally
-      "media-src": ["'self'", "data:", "*"],
-      "connect-src": ["'self'", "https://generativelanguage.googleapis.com"]
+      "img-src": ["'self'", "data:", "*", "https://lottie.host"], 
+      "media-src": ["'self'", "data:", "*", "https://lottie.host"],
+      "connect-src": ["'self'", "https://generativelanguage.googleapis.com", "https://lottie.host", "https://unpkg.com"]
     }
   }
 }));
