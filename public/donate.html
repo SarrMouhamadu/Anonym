@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soutenir Anonyme — Faire un Don</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-[--color-bg] min-h-screen flex flex-col items-center px-4 pt-20">
+  <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-[#E2EAF2] z-50 h-16 flex items-center px-4 md:px-6">
+    <div class="max-w-[1200px] w-full mx-auto flex justify-between items-center">
+      <h1 class="text-2xl text-[#1A56A0] cursor-pointer" onclick="location.href='index.html'">Anonyme</h1>
+      <button onclick="history.back()" class="text-sm font-bold text-[--color-text-muted] hover:text-[--color-text-primary]">← Retour</button>
+    </div>
+  </nav>
+
+  <div class="max-w-[500px] w-full mt-8 animate-fade-up">
+    <div class="glass-card p-8 text-center bg-white shadow-xl">
+      <div class="w-16 h-16 bg-[#FCE7F3] text-[#E8879A] rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+      </div>
+      <h2 class="text-3xl text-[--color-text-primary] mb-3">Soutenir Anonyme</h2>
+      <p class="text-[--color-text-body] text-sm md:text-base mb-10 leading-relaxed">Grâce à vos dons, nous pouvons maintenir cette plateforme gratuite, anonyme et accessible à tous 24h/24.</p>
+      
+      <div class="grid grid-cols-2 gap-4 mb-8">
+        <button class="donate-opt py-4 border border-[#E2EAF2] rounded-[16px] text-lg font-bold hover:border-[--color-primary] hover:bg-[--color-primary-pale] transition-all" onclick="selectDon(500, this)">500 FCFA</button>
+        <button class="donate-opt py-4 border border-[#E2EAF2] rounded-[16px] text-lg font-bold hover:border-[--color-primary] hover:bg-[--color-primary-pale] transition-all" onclick="selectDon(1000, this)">1000 FCFA</button>
+        <button class="donate-opt py-4 border border-[#E2EAF2] rounded-[16px] text-lg font-bold hover:border-[--color-primary] hover:bg-[--color-primary-pale] transition-all" onclick="selectDon(2500, this)">2500 FCFA</button>
+        <button class="donate-opt py-4 border border-[#E2EAF2] rounded-[16px] text-lg font-bold hover:border-[--color-primary] hover:bg-[--color-primary-pale] transition-all" onclick="selectDon(5000, this)">5000 FCFA</button>
+      </div>
+
+      <div class="mb-8">
+        <label class="block text-xs font-bold uppercase text-[--color-text-muted] mb-2 text-left">Montant personnalisé</label>
+        <div class="relative">
+          <input type="number" id="custom-amount" placeholder="Entrez un montant" class="w-full h-12 bg-[--color-bg] border border-[--color-border] rounded-[12px] px-4 text-sm font-bold focus:border-[--color-primary] outline-none">
+          <span class="absolute right-4 top-3.5 text-xs font-bold text-[--color-text-muted]">FCFA</span>
+        </div>
+      </div>
+
+      <button id="btn-donate" class="w-full h-14 bg-[--color-primary] text-white font-bold rounded-[12px] shadow-lg shadow-[--color-primary]/20 text-lg flex items-center justify-center gap-3">
+        <span>Faire un don</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+      </button>
+
+      <div class="mt-8 flex justify-center gap-4 opacity-40">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Orange_Money_logo.png" alt="Orange Money" class="h-6 object-contain">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Wave_Money_Logo.png" alt="Wave" class="h-6 object-contain">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectDon(amount, el) {
+      document.querySelectorAll('.donate-opt').forEach(b => b.classList.remove('border-[--color-primary]', 'bg-[--color-primary-pale]'));
+      el.classList.add('border-[--color-primary]', 'bg-[--color-primary-pale]');
+      document.getElementById('custom-amount').value = amount;
+    }
+
+    document.getElementById('btn-donate').onclick = () => {
+      const amount = document.getElementById('custom-amount').value;
+      if (!amount || amount < 50) return alert('Montant invalide');
+      
+      const btn = document.getElementById('btn-donate');
+      btn.innerHTML = `<div class="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Chargement...`;
+      btn.disabled = true;
+
+      setTimeout(() => {
+        alert('Redirection vers la passerelle de paiement (Orange Money/Wave)...\n\nMontant : ' + amount + ' FCFA');
+        btn.innerHTML = `<span>Faire un don</span><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>`;
+        btn.disabled = false;
+      }, 1500);
+    };
+  </script>
+</body>
+</html>
