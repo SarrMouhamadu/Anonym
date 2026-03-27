@@ -76,7 +76,16 @@ h1, h2, h3, .serif {
   animation: fadeUp 0.3s ease-out forwards;
 }
 
-/* Toggle Switch Style */
+/* Heart Color Cycling Animation for Donation */
+@keyframes heartColorPulse {
+  0%, 100% { color: #D96C6C; fill: #D96C6C; transform: scale(1); }
+  33% { color: #3BAA74; fill: #3BAA74; transform: scale(1.1); }
+  66% { color: #1A56A0; fill: #1A56A0; transform: scale(1.05); }
+}
+
+.animate-heart-cycle {
+  animation: heartColorPulse 15s infinite ease-in-out;
+}
 .switch {
   position: relative;
   display: inline-block;
